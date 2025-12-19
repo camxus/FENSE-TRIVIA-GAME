@@ -5,7 +5,6 @@ const dev = process.env.NODE_ENV !== "production";
 const hostname = dev ? "localhost" : undefined;
 const port = process.env.PORT || 3000;
 
-
 const httpServer = createServer(async (req: any, res: any) => { });
 
 // Initialize Socket.IO
