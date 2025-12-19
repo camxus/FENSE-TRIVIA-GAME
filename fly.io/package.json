@@ -1,0 +1,25 @@
+{
+  "name": "fense-trivia",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node server.ts",
+    "lint": "next lint",
+    "start": "NODE_ENV=production ts-node dist/server.ts"
+  },
+  "dependencies": {
+    "@vercel/analytics": "latest",
+    "http": "latest",
+    "nodemon": "^3.1.10",
+    "socket.io": "latest",
+    "socket.io-client": "latest",
+    "url": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5"
+  }
+}
