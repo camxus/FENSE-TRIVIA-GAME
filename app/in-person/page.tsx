@@ -51,7 +51,13 @@ export default function InPersonPage() {
 
   if (gameState === "lobby") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <Link
@@ -81,13 +87,19 @@ export default function InPersonPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     )
   }
 
   if (gameState === "waiting") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-4xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Game Setup</h1>
@@ -149,13 +161,19 @@ export default function InPersonPage() {
             <p className="text-center text-muted-foreground">Waiting for the leader to start the game...</p>
           )}
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   if (gameState === "playing") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
             <Image
@@ -178,7 +196,7 @@ export default function InPersonPage() {
           </Card>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <Scoreboard players={players}/>
+            <Scoreboard players={players} />
 
             {isCreator && (
               <Card>
@@ -200,13 +218,19 @@ export default function InPersonPage() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   if (gameState === "question-ended") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
             <Image
@@ -284,13 +308,19 @@ export default function InPersonPage() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   if (gameState === "new-category") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
             <Image
@@ -348,22 +378,26 @@ export default function InPersonPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (gameState === "game-ended") {
-    const sortedPlayers = [...players].sort((a, b) => b.score - a.score)
-
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <motion.div
+        key={gameState}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <Scoreboard cardTitle="Game Over!" cardDescription="Final Leaderboard" players={players} />
         <Link href="/in-person">
           <Button className="w-full" size="lg">
             Play Again
           </Button>
         </Link>
-      </div>
+      </motion.div>
     )
   }
 
