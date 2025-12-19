@@ -70,7 +70,7 @@ export function Reactions({ activeReactions, onClick }: ReactionsProps) {
           <button
             key={emoji}
             onClick={() => onClick(emoji)}
-            className="text-2xl h-14 w-14 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/40 transition"
+            className="cursor-pointer text-2xl h-14 w-14 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/40 transition"
           >
             {emoji}
           </button>
