@@ -204,6 +204,7 @@ export function useGameSocket(): UseGameSocketReturn {
       socketInstance.off("player-added")
       socketInstance.off("player-removed")
       socketInstance.off("points-updated")
+      socketInstance.off("reaction-recieved")
     }
   }, [])
 
