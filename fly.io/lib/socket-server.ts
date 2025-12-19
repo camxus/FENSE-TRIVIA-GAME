@@ -1,6 +1,6 @@
 import type { Server as HTTPServer } from "http"
 import { Server as SocketIOServer, type Socket } from "socket.io"
-
+import questions from "./questions.json"
 export interface Player {
   id: string
   name: string
@@ -11,6 +11,7 @@ export interface Room {
   id: string
   mode: "online" | "in-person"
   players: Player[]
+  currentCategoryIndex: number | null
   currentQuestionIndex: number | null
   isActive: boolean
   leaderId?: string
@@ -22,29 +23,15 @@ export interface Question {
   id: string
   question: string
   answer: string
-  category: string
   timeLimit: number
 }
 
-// Sample questions
-export const QUESTIONS: Question[] = [
-  { id: "1", question: "Capital of France", answer: "PARIS", category: "Geography", timeLimit: 30 },
-  { id: "2", question: "Largest planet in our solar system", answer: "JUPITER", category: "Science", timeLimit: 30 },
-  { id: "3", question: "Author of Romeo and Juliet", answer: "SHAKESPEARE", category: "Literature", timeLimit: 30 },
-  { id: "4", question: "Chemical symbol for gold", answer: "AU", category: "Science", timeLimit: 20 },
-  { id: "5", question: "Year World War II ended", answer: "1945", category: "History", timeLimit: 25 },
-  { id: "6", question: "Fastest land animal", answer: "CHEETAH", category: "Nature", timeLimit: 20 },
-  {
-    id: "7",
-    question: "Programming language named after a snake",
-    answer: "PYTHON",
-    category: "Technology",
-    timeLimit: 25,
-  },
-  { id: "8", question: "Number of continents on Earth", answer: "SEVEN", category: "Geography", timeLimit: 20 },
-  { id: "9", question: "Smallest prime number", answer: "TWO", category: "Math", timeLimit: 15 },
-  { id: "10", question: "Main ingredient in guacamole", answer: "AVOCADO", category: "Food", timeLimit: 20 },
-]
+export interface Category {
+  categoryName: string
+  questions: Question[]
+}
+
+export const QUESTIONS: Category[] = questions
 
 const rooms = new Map<string, Room>()
 
@@ -68,6 +55,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
         id: roomId,
         mode,
         players: [player],
+        currentCategoryIndex: null,
         currentQuestionIndex: null,
         isActive: false,
         leaderId: mode === "in-person" ? socket.id : undefined,
@@ -92,12 +80,14 @@ export function initializeSocketServer(httpServer: HTTPServer) {
       const player: Player = { id: socket.id, name: playerName, score: 0 }
       room.players.push(player)
 
-      const question = room.currentQuestionIndex !== null ? QUESTIONS[room.currentQuestionIndex] : null
+      const category = getCategory(room.currentCategoryIndex)
+      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
 
       socket.join(roomId)
       io.to(roomId).emit("player-joined", { player, room })
       socket.emit("room-joined", {
         room,
+        category: category?.categoryName,
         question: { ...question, answer: undefined, answerLenght: question?.answer.length },
         timerEndTime: room.timerEndTime,
       })
@@ -108,32 +98,24 @@ export function initializeSocketServer(httpServer: HTTPServer) {
     // Start game
     socket.on("start-game", ({ roomId }: { roomId: string }) => {
       const room = rooms.get(roomId)
-      console.log(room)
       if (!room) return
 
       room.isActive = true
       room.currentQuestionIndex = 0
+      room.currentCategoryIndex = 0
       room.guesses = {}
 
-      const question = QUESTIONS[room.currentQuestionIndex]
+      const category = getCategory(room.currentCategoryIndex)
+      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+
+      if (!question) return
+
       room.timerEndTime = Date.now() + question.timeLimit * 1000
 
       io.to(roomId).emit("game-started", {
+        category: category?.categoryName,
         question: { ...question, answer: undefined, answerLenght: question.answer.length },
         timerEndTime: room.timerEndTime,
-      })
-    })
-
-    // Submit guess (online mode)
-    socket.on("submit-guess", ({ roomId, guess }: { roomId: string; guess: string }) => {
-      const room = rooms.get(roomId)
-      if (!room || !room.isActive) return
-
-      room.guesses[socket.id] = guess.toUpperCase()
-
-      io.to(roomId).emit("guess-submitted", {
-        playerId: socket.id,
-        playerName: room.players.find((p) => p.id === socket.id)?.name,
       })
     })
 
@@ -141,7 +123,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
     socket.on("end-question", ({ roomId }: { roomId: string }) => {
       const room = rooms.get(roomId)
       if (!room) return
-      const question = room.currentQuestionIndex !== null ? QUESTIONS[room.currentQuestionIndex] : null
+      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
       const correctAnswer = question?.answer.toUpperCase()
 
       // Calculate scores for online mode
@@ -170,20 +152,47 @@ export function initializeSocketServer(httpServer: HTTPServer) {
     socket.on("next-question", ({ roomId }: { roomId: string }) => {
       const room = rooms.get(roomId)
       if (!room) return
-      if (room.currentQuestionIndex === null) return
+      if (room.currentQuestionIndex === null || room.currentCategoryIndex === null) return
 
-      room.currentQuestionIndex++
+      const nextCategoryIndex = room.currentCategoryIndex + 1;
+      const nextQuestionIndex = room.currentQuestionIndex + 1;
 
-      if (room.currentQuestionIndex >= QUESTIONS.length) {
-        room.isActive = false
-        io.to(roomId).emit("game-ended", { players: room.players })
-        return
+      const nextQuestion = getQuestion(room.currentCategoryIndex, nextQuestionIndex);
+
+      if (!nextQuestion) {
+        const nextCategory = getCategory(nextCategoryIndex);
+
+        io.to(roomId).emit("category-ended", {
+          players: room.players,
+          nextCategory: nextCategory?.categoryName || null,
+        });
+
+        room.currentCategoryIndex = nextCategoryIndex;
+        room.currentQuestionIndex = -1;
+
+        if (!nextCategory) {
+          room.currentCategoryIndex = null;
+          room.currentQuestionIndex = null;
+          room.isActive = false;
+
+          io.to(roomId).emit("game-ended", { players: room.players });
+          return;
+        }
+
+        return;
+      } else {
+        room.currentQuestionIndex = nextQuestionIndex;
       }
 
-      const question = QUESTIONS[room.currentQuestionIndex]
+      const category = getCategory(room.currentCategoryIndex)
+      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+
+      if (!question) return
+
       room.timerEndTime = Date.now() + question.timeLimit * 1000
 
       io.to(roomId).emit("next-question", {
+        category: category?.categoryName,
         question: { ...question, answer: undefined, answerLenght: question.answer.length },
         timerEndTime: room.timerEndTime,
       })
@@ -256,7 +265,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
           return
         }
 
-        const question = room.currentQuestionIndex !== null && QUESTIONS[room.currentQuestionIndex]
+        const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
         if (!question) return
 
         const correctAnswer = question.answer.toUpperCase()
@@ -281,10 +290,28 @@ export function initializeSocketServer(httpServer: HTTPServer) {
         socket.emit("answer-feedback", { feedback })
       }
     )
+
+    // Player sends a reaction
+    socket.on("send-reaction", ({ roomId, emoji }: { roomId: string; emoji: string }) => {
+      const room = rooms.get(roomId)
+      if (!room) return
+  
+      // Broadcast the reaction to everyone in the room
+      io.to(roomId).emit("reaction-received", { playerId: socket.id, emoji })
+    })
   })
 
 
+
   return io
+}
+
+function getCategory(categoryIndex: number | null): Category | null {
+  return categoryIndex !== null ? QUESTIONS[categoryIndex] || null : null
+}
+
+function getQuestion(categoryIndex: number | null, questionIndex: number | null): Question | null {
+  return categoryIndex !== null && questionIndex !== null ? QUESTIONS[categoryIndex].questions[questionIndex] || null : null
 }
 
 function generateRoomCode(): string {

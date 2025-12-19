@@ -1,14 +1,22 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function HomePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-5xl font-bold mb-2">Fense</CardTitle>
-          <CardDescription className="text-lg">Multiplayer Trivia Game</CardDescription>
+          <CardTitle className="flex justify-center text-5xl font-bold mb-2">
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
+          </CardTitle>
+          {/* <CardDescription className="text-lg">Multiplayer Trivia Game</CardDescription> */}
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">

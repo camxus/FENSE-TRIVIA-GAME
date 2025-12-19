@@ -1,6 +1,6 @@
 const { createServer } = require("http")
 const next = require("next")
-const { initializeSocketServer } = require("./lib/socket-server")
+const { initializeSocketServer } = require("./fly.io/lib/socket-server")
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = dev ? "localhost" : undefined;

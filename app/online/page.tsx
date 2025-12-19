@@ -20,28 +20,32 @@ import { PlayerList } from "@/components/player-list";
 import { QuestionDisplay } from "@/components/question-display";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { WordleInput } from "@/components/wordle-input";
+import { AnimatePresence, motion } from "framer-motion"
+import { Reactions } from "@/components/reactions";
 
 export default function OnlinePage() {
   const {
     gameState,
     players,
+    currentCategory,
     currentQuestion,
     timerEndTime,
     guess,
     correctAnswer,
     currentRoomId,
     isCreator,
-    hasSubmitted,
     feedback,
+    activeReactions,
     setGuess,
     createRoom,
     joinRoom,
     startGame,
-    submitGuess,
     endQuestion,
     nextQuestion,
     queryAnswer,
+    sendReaction,
   } = useGameSocket();
 
   // Local state for form inputs
@@ -56,11 +60,6 @@ export default function OnlinePage() {
   const handleJoinRoom = () => {
     if (!playerName.trim() || !roomId.trim()) return;
     joinRoom(playerName, roomId);
-  };
-
-  const handleSubmitGuess = () => {
-    if (!guess.trim() || hasSubmitted) return;
-    submitGuess(guess);
   };
 
   useEffect(() => {
@@ -176,6 +175,7 @@ export default function OnlinePage() {
             )}
           </CardContent>
         </Card>
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
       </div>
     );
   }
@@ -185,7 +185,12 @@ export default function OnlinePage() {
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Fense</h1>
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
             <div className="text-sm text-muted-foreground">
               Room: {currentRoomId}
             </div>
@@ -217,11 +222,7 @@ export default function OnlinePage() {
                           length={currentQuestion.answerLenght}
                           value={guess}
                           onChange={setGuess}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleSubmitGuess()
-                          }
                           feedback={feedback}
-                          disabled={hasSubmitted}
                         />
                       </div>
                     </div>
@@ -230,14 +231,6 @@ export default function OnlinePage() {
                       <WordleGuess guess={guess} answer={correctAnswer} />
                     )}
 
-                    <Button
-                      onClick={handleSubmitGuess}
-                      disabled={!guess.trim() || hasSubmitted}
-                      className="w-full"
-                      size="lg"
-                    >
-                      {hasSubmitted ? "Submitted!" : "Submit Answer"}
-                    </Button>
                   </CardContent>
                 </Card>
               )}
@@ -248,6 +241,9 @@ export default function OnlinePage() {
             </div>
           </div>
         </div>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
       </div>
     );
   }
@@ -257,7 +253,12 @@ export default function OnlinePage() {
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Fense</h1>
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
             <div className="text-sm text-muted-foreground">
               Room: {currentRoomId}
             </div>
@@ -293,6 +294,77 @@ export default function OnlinePage() {
             </div>
           </div>
         </div>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
+      </div>
+    );
+  }
+
+  // Inside OnlinePage component
+  if (gameState === "new-category") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+        <div className="max-w-6xl mx-auto space-y-6 py-8">
+          <div className="flex items-center justify-between">
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
+            <div className="text-sm text-muted-foreground">
+              Room: {currentRoomId}
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6 relative">
+              <Scoreboard players={players} />
+
+              {/* Fullscreen Category Animation */}
+              <AnimatePresence>
+                {currentCategory && (
+                  <motion.div
+                    key={currentCategory}
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                  >
+                    <span className="mb-6 text-2xl">New Category</span>
+                    <span className="text-4xl">{currentCategory}</span>
+
+                    {/* Start Button */}
+                    {isCreator && (
+                      <Button
+                        onClick={nextQuestion}
+                        className="mt-10 px-10 py-4 text-2xl"
+                        size="lg"
+                      >
+                        Start
+                      </Button>
+                    )}
+                    {!isCreator && (
+                      <p className="mt-10 text-xl text-muted-foreground">
+                        Waiting for host to start...
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div>
+              {/* Optionally keep Scoreboard here for larger screens */}
+              <Scoreboard players={players} />
+            </div>
+          </div>
+        </div>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
       </div>
     );
   }
@@ -315,8 +387,8 @@ export default function OnlinePage() {
                 <div
                   key={player.id}
                   className={`p-4 rounded-lg flex items-center justify-between ${index === 0
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
                     }`}
                 >
                   <div className="flex items-center gap-4">
@@ -335,6 +407,9 @@ export default function OnlinePage() {
             </Link>
           </CardContent>
         </Card>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
       </div>
     );
   }

@@ -23,29 +23,31 @@ interface Question {
   answerLenght: number
 }
 
-type GameState = "lobby" | "waiting" | "playing" | "question-ended" | "game-ended" | "setup"
+type GameState = "lobby" | "waiting" | "playing" | "question-ended" | "new-category" | "game-ended" | "setup"
 
 export enum GameModes {
   IN_PERSON = "in-person",
   ONLINE = "online"
 }
 
+export interface Reaction { id: string; emoji: string }
+
 interface UseGameSocketReturn {
   gameState: GameState
   players: Player[]
+  currentCategory: string | null
   currentQuestion: Question | null
   timerEndTime: number | null
   guess: string
   correctAnswer: string
   currentRoomId: string
   isCreator: boolean
-  hasSubmitted: boolean
   feedback: AnswerFeedback[] | null
+  activeReactions: Reaction[]
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
   startGame: (roomId?: string) => void
-  submitGuess: (guess: string) => void
   endQuestion: () => void
   nextQuestion: () => void
   queryAnswer: (guessValue: string) => void
@@ -53,20 +55,22 @@ interface UseGameSocketReturn {
   removePlayer: (playerId: string, roomId?: string) => void
   stopTimer: (roomId?: string) => void
   assignPoints: (selectedPlayerId: string, pointsToAssign: string, roomId?: string) => void
+  sendReaction: (emoji: string, roomId?: string) => void
 }
 
 export function useGameSocket(): UseGameSocketReturn {
   const [gameState, setGameState] = useState<GameState>("lobby")
   const [players, setPlayers] = useState<Player[]>([])
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [timerEndTime, setTimerEndTime] = useState<number | null>(null)
   const [guess, setGuess] = useState("")
-  const [hasSubmitted, setHasSubmitted] = useState(false)
   const [correctAnswer, setCorrectAnswer] = useState("")
   const [currentRoomId, setCurrentRoomId] = useState("")
   const [isCreator, setIsCreator] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
+  const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
 
   // Initialize socket connection
   useEffect(() => {
@@ -81,12 +85,13 @@ export function useGameSocket(): UseGameSocketReturn {
       setIsCreator(true)
     })
 
-    socketInstance.on("room-joined", ({ room, question, timerEndTime }) => {
+    socketInstance.on("room-joined", ({ room, question, category, timerEndTime }) => {
       setCurrentRoomId(room.id)
       setPlayers(room.players)
 
       if (room.isActive && question) {
         setTimerEndTime(timerEndTime)
+        setCurrentCategory(category)
         setCurrentQuestion(question)
         setGameState("playing")
       } else {
@@ -104,11 +109,11 @@ export function useGameSocket(): UseGameSocketReturn {
       setPlayers(room.players)
     })
 
-    socketInstance.on("game-started", ({ question, timerEndTime }) => {
+    socketInstance.on("game-started", ({ category, question, timerEndTime }) => {
+      setCurrentCategory(category)
       setCurrentQuestion(question)
       setTimerEndTime(timerEndTime)
       setGameState("playing")
-      setHasSubmitted(false)
       setGuess("")
       setCorrectAnswer("")
     })
@@ -123,11 +128,17 @@ export function useGameSocket(): UseGameSocketReturn {
       setGameState("question-ended")
     })
 
-    socketInstance.on("next-question", ({ question, timerEndTime }) => {
+    socketInstance.on("category-ended", ({ nextCategory, players }) => {
+      setCurrentCategory(nextCategory)
+      setPlayers(players)
+      setGameState("new-category")
+    })
+
+    socketInstance.on("next-question", ({ category, question, timerEndTime }) => {
+      setCurrentCategory(category)
       setCurrentQuestion(question)
       setTimerEndTime(timerEndTime)
       setGameState("playing")
-      setHasSubmitted(false)
       setGuess("")
       setCorrectAnswer("")
     })
@@ -165,6 +176,16 @@ export function useGameSocket(): UseGameSocketReturn {
       setPlayers(players)
     })
 
+    socket?.off("reaction-received").on("reaction-received", ({ emoji, playerId }) => {
+      const reactionId = `${playerId}-${Date.now()}`
+      setActiveReactions((prev) => [...prev, { id: reactionId, emoji }])
+      // Remove reaction after 2 seconds
+      setTimeout(() => {
+        setActiveReactions((prev) => prev.filter((r) => r.id !== reactionId))
+      }, 2000)
+    })
+
+
     // Clean up all listeners on unmount
     return () => {
       socketInstance.off("room-created")
@@ -174,6 +195,7 @@ export function useGameSocket(): UseGameSocketReturn {
       socketInstance.off("game-started")
       socketInstance.off("guess-submitted")
       socketInstance.off("question-ended")
+      socketInstance.off("category-ended")
       socketInstance.off("next-question")
       socketInstance.off("game-ended")
       socketInstance.off("timer-stopped")
@@ -209,15 +231,6 @@ export function useGameSocket(): UseGameSocketReturn {
     socket.emit("start-game", { roomId: roomId })
   }, [socket, currentRoomId])
 
-  // Submit guess function
-  const submitGuess = useCallback(
-    (guessValue: string) => {
-      if (!socket || !guessValue.trim() || hasSubmitted) return
-      socket.emit("submit-guess", { roomId: currentRoomId, guess: guessValue.trim() })
-      setHasSubmitted(true)
-    },
-    [socket, currentRoomId, hasSubmitted],
-  )
 
   // End question function
   const endQuestion = useCallback(() => {
@@ -260,28 +273,33 @@ export function useGameSocket(): UseGameSocketReturn {
     socket.emit("assign-points", { roomId, playerId: selectedPlayerId, points: Number.parseInt(pointsToAssign) })
   }
 
+  const sendReaction = (emoji: string, roomId = currentRoomId) => {
+    socket?.emit("send-reaction", { emoji, roomId: roomId })
+  }
+
   return {
     gameState,
     players,
+    currentCategory,
     currentQuestion,
     timerEndTime,
     guess,
     correctAnswer,
     currentRoomId,
     isCreator,
-    hasSubmitted,
     feedback,
+    activeReactions,
     setGuess,
     createRoom,
     joinRoom,
     startGame,
-    submitGuess,
     endQuestion,
     nextQuestion,
     queryAnswer,
     addPlayer,
     removePlayer,
     stopTimer,
-    assignPoints
+    assignPoints,
+    sendReaction
   }
 }

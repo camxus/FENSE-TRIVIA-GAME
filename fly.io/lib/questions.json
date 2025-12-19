@@ -1,0 +1,87 @@
+[
+  {
+    "categoryName": "Geography",
+    "questions": [
+      {
+        "id": "1",
+        "question": "Capital of France",
+        "answer": "PARIS",
+        "timeLimit": 30
+      },
+      {
+        "id": "8",
+        "question": "Number of continents on Earth",
+        "answer": "SEVEN",
+        "timeLimit": 20
+      }
+    ]
+  },
+  {
+    "categoryName": "Science & Nature",
+    "questions": [
+      {
+        "id": "2",
+        "question": "Largest planet in our solar system",
+        "answer": "JUPITER",
+        "timeLimit": 30
+      },
+      {
+        "id": "4",
+        "question": "Chemical symbol for gold",
+        "answer": "AU",
+        "timeLimit": 20
+      },
+      {
+        "id": "6",
+        "question": "Fastest land animal",
+        "answer": "CHEETAH",
+        "timeLimit": 20
+      }
+    ]
+  },
+  {
+    "categoryName": "Literature",
+    "questions": [
+      {
+        "id": "3",
+        "question": "Author of Romeo and Juliet",
+        "answer": "SHAKESPEARE",
+        "timeLimit": 30
+      }
+    ]
+  },
+  {
+    "categoryName": "History",
+    "questions": [
+      {
+        "id": "5",
+        "question": "Year World War II ended",
+        "answer": "1945",
+        "timeLimit": 25
+      }
+    ]
+  },
+  {
+    "categoryName": "Technology, Math & Food",
+    "questions": [
+      {
+        "id": "7",
+        "question": "Programming language named after a snake",
+        "answer": "PYTHON",
+        "timeLimit": 25
+      },
+      {
+        "id": "9",
+        "question": "Smallest prime number",
+        "answer": "TWO",
+        "timeLimit": 15
+      },
+      {
+        "id": "10",
+        "question": "Main ingredient in guacamole",
+        "answer": "AVOCADO",
+        "timeLimit": 20
+      }
+    ]
+  }
+]

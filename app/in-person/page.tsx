@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { getSocket } from "@/lib/socket-client"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,7 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Timer } from "@/components/timer"
 import { ArrowLeft, Plus, Trash2, Play, StopCircle, SkipForward } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { GameModes, useGameSocket } from "@/hooks/use-game-socket";
+import { AnimatePresence, motion } from "framer-motion"
+import { Scoreboard } from "@/components/scoreboard"
 
 export default function InPersonPage() {
   const [leaderName, setLeaderName] = useState("")
@@ -20,19 +22,18 @@ export default function InPersonPage() {
   const {
     gameState,
     players,
+    currentCategory,
     currentQuestion,
     timerEndTime,
     guess,
     correctAnswer,
     currentRoomId,
     isCreator,
-    hasSubmitted,
     feedback,
     setGuess,
     createRoom,
     joinRoom,
     startGame,
-    submitGuess,
     endQuestion,
     nextQuestion,
     queryAnswer,
@@ -157,7 +158,12 @@ export default function InPersonPage() {
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Fense</h1>
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
             <div className="text-sm text-muted-foreground">Room: {currentRoomId}</div>
           </div>
 
@@ -172,26 +178,7 @@ export default function InPersonPage() {
           </Card>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Scoreboard</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[...players]
-                    .sort((a, b) => b.score - a.score)
-                    .map((player, index) => (
-                      <div key={player.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-muted-foreground">#{index + 1}</span>
-                          <span className="font-medium">{player.name}</span>
-                        </div>
-                        <span className="font-bold text-lg">{player.score}</span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
+            <Scoreboard players={players}/>
 
             {isCreator && (
               <Card>
@@ -222,7 +209,12 @@ export default function InPersonPage() {
       <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
         <div className="max-w-6xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Fense</h1>
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
             <div className="text-sm text-muted-foreground">Room: {currentRoomId}</div>
           </div>
 
@@ -240,26 +232,9 @@ export default function InPersonPage() {
           </Card>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Scoreboard</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[...players]
-                    .sort((a, b) => b.score - a.score)
-                    .map((player, index) => (
-                      <div key={player.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-muted-foreground">#{index + 1}</span>
-                          <span className="font-medium">{player.name}</span>
-                        </div>
-                        <span className="font-bold text-lg">{player.score}</span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+              <Scoreboard players={players} />
+            </div>
 
             {isCreator && (
               <Card>
@@ -313,40 +288,81 @@ export default function InPersonPage() {
     )
   }
 
+  if (gameState === "new-category") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+        <div className="max-w-6xl mx-auto space-y-6 py-8">
+          <div className="flex items-center justify-between">
+            <Image
+              src="/fense-logo.png"
+              alt="Fense Logo"
+              width={150}
+              height={150}
+            />
+            <div className="text-sm text-muted-foreground">
+              Room: {currentRoomId}
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6 relative">
+              <Scoreboard players={players} />
+
+              {/* Fullscreen Category Animation */}
+              <AnimatePresence>
+                {currentCategory && (
+                  <motion.div
+                    key={currentCategory}
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                  >
+                    <span className="mb-6 text-2xl">New Category</span>
+                    <span className="text-4xl">{currentCategory}</span>
+
+                    {/* Start Button */}
+                    {isCreator && (
+                      <Button
+                        onClick={nextQuestion}
+                        className="mt-10 px-10 py-4 text-2xl"
+                        size="lg"
+                      >
+                        Start
+                      </Button>
+                    )}
+                    {!isCreator && (
+                      <p className="mt-10 text-xl text-muted-foreground">
+                        Waiting for host to start...
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div>
+              {/* Optionally keep Scoreboard here for larger screens */}
+              <Scoreboard players={players} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === "game-ended") {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score)
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-4xl text-center">Game Over!</CardTitle>
-            <CardDescription className="text-center">Final Leaderboard</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              {sortedPlayers.map((player, index) => (
-                <div
-                  key={player.id}
-                  className={`p-4 rounded-lg flex items-center justify-between ${index === 0 ? "bg-primary text-primary-foreground" : "bg-secondary"
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold">#{index + 1}</span>
-                    <span className="text-lg">{player.name}</span>
-                  </div>
-                  <span className="text-2xl font-bold">{player.score}</span>
-                </div>
-              ))}
-            </div>
-
-            <Link href="/in-person">
-              <Button className="w-full" size="lg">
-                Play Again
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <Scoreboard cardTitle="Game Over!" cardDescription="Final Leaderboard" players={players} />
+        <Link href="/in-person">
+          <Button className="w-full" size="lg">
+            Play Again
+          </Button>
+        </Link>
       </div>
     )
   }
