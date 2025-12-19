@@ -1,39 +1,76 @@
-"use client"
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { motion, AnimatePresence } from "framer-motion"
-import { useEffect, useState } from "react"
+interface Reaction {
+  id: string;
+  emoji: string;
+}
 
-export interface Reaction {
-  id: string
-  emoji: string
+interface InternalReaction extends Reaction {
+  size: number;
+  xStart: number;
+  xEnd: number;
+  duration: number;
+  yEnd: number;
 }
 
 interface ReactionsProps {
-  activeReactions: Reaction[]
-  onClick: (emoji: string) => void
+  activeReactions: Reaction[];
+  onClick: (emoji: string) => void;
 }
 
-const EMOJIS = ["👍", "❤️", "😂", "😮", "🎉", "🔥"]
-
-const getRandom = (min: number, max: number) => Math.random() * (max - min) + min;
+const EMOJIS = ["👍", "❤️", "😂", "😮", "🎉", "🔥"];
 
 export function Reactions({ activeReactions, onClick }: ReactionsProps) {
-  const [windowWidth, setWindowWidth] = useState(0);
-  const [windowHeight, setWindowHeight] = useState(0);
+  const [reactions, setReactions] = useState<InternalReaction[]>([]);
+  const seenIds = useRef(new Set<string>());
+
+  const [viewport, setViewport] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
-    setWindowWidth(window.innerWidth);
-    setWindowHeight(window.innerHeight);
+    setViewport({ w: window.innerWidth, h: window.innerHeight });
   }, []);
+
+  /** Only append NEW reactions */
+  useEffect(() => {
+    const newOnes: InternalReaction[] = [];
+
+    for (const r of activeReactions) {
+      if (seenIds.current.has(r.id)) continue;
+
+      seenIds.current.add(r.id);
+
+      const xStart = Math.random() * viewport.w;
+
+      newOnes.push({
+        ...r,
+        size: Math.random() * 40 + 24,
+        xStart,
+        xEnd: xStart + Math.random() * 200 - 100,
+        duration: Math.random() * 2 + 2,
+        yEnd: -viewport.h - Math.random() * 200,
+      });
+    }
+
+    if (newOnes.length) {
+      setReactions((prev) => [...prev, ...newOnes]);
+    }
+  }, [activeReactions, viewport]);
+
+  const removeReaction = (id: string) => {
+    setReactions((prev) => prev.filter((r) => r.id !== id));
+    seenIds.current.delete(id);
+  };
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      <div className="absolute bottom-6 w-full flex justify-center gap-2 pointer-events-auto z-60">
+      {/* Buttons */}
+      <div className="absolute bottom-6 w-full flex justify-center gap-2 pointer-events-auto">
         {EMOJIS.map((emoji) => (
           <button
             key={emoji}
             onClick={() => onClick(emoji)}
-            className="text-2xl p-2 bg-white/20 rounded-full backdrop-blur-md hover:bg-white/40 transition"
+            className="text-2xl h-14 w-14 rounded-full bg-black/30 backdrop-blur-md hover:bg-black/40 transition"
           >
             {emoji}
           </button>
@@ -42,38 +79,29 @@ export function Reactions({ activeReactions, onClick }: ReactionsProps) {
 
       {/* Floating reactions */}
       <AnimatePresence>
-        {activeReactions.map((reaction) => {
-          const size = getRandom(24, 64);
-          const xStart = getRandom(0, windowWidth);
-          const xEnd = xStart + getRandom(-100, 100);
-          const duration = getRandom(2, 4);
-
-          return (
-            <motion.div
-              key={reaction.id}
-              className="absolute"
-              style={{
-                fontSize: size,
-                left: xStart,
-                bottom: 0,
-              }}
-              initial={{ opacity: 0, y: 0, scale: 0.5 }}
-              animate={{
-                opacity: 1,
-                y: -windowHeight - getRandom(0, 200),
-                x: xEnd,
-                scale: getRandom(0.8, 1.2),
-              }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: duration,
-                ease: "easeOut",
-              }}
-            >
-              {reaction.emoji}
-            </motion.div>
-          );
-        })}
+        {reactions.map((r) => (
+          <motion.div
+            key={r.id}
+            className="absolute"
+            style={{
+              fontSize: r.size,
+              left: r.xStart,
+              bottom: 0,
+            }}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{
+              opacity: 1,
+              y: r.yEnd,
+              x: r.xEnd,
+              scale: 1,
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: r.duration, ease: "easeOut" }}
+            onAnimationComplete={() => removeReaction(r.id)}
+          >
+            {r.emoji}
+          </motion.div>
+        ))}
       </AnimatePresence>
     </div>
   );

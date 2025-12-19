@@ -176,7 +176,7 @@ export function useGameSocket(): UseGameSocketReturn {
       setPlayers(players)
     })
 
-    socket?.off("reaction-received").on("reaction-received", ({ emoji, playerId }) => {
+    socketInstance.on("reaction-received", ({ emoji, playerId }) => {
       const reactionId = `${playerId}-${Date.now()}`
       setActiveReactions((prev) => [...prev, { id: reactionId, emoji }])
       // Remove reaction after 2 seconds
@@ -274,7 +274,8 @@ export function useGameSocket(): UseGameSocketReturn {
   }
 
   const sendReaction = (emoji: string, roomId = currentRoomId) => {
-    socket?.emit("send-reaction", { emoji, roomId: roomId })
+    const socket = getSocket()
+    socket?.emit("send-reaction", { emoji, roomId })
   }
 
   return {

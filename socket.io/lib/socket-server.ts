@@ -1,6 +1,6 @@
 import type { Server as HTTPServer } from "http"
 import { Server as SocketIOServer, type Socket } from "socket.io"
-import * as questions from "./questions.json" with { type: "json" };
+import questions from "./questions.json" with { type: "json" };
 export interface Player {
   id: string
   name: string
