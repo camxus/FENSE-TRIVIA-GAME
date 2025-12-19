@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --outDir dist",
     "dev": "ts-node server.ts",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node dist/server.js"
   },
   "dependencies": {
     "@vercel/analytics": "latest",
