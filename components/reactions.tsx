@@ -65,7 +65,7 @@ export function Reactions({ activeReactions, onClick }: ReactionsProps) {
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
       {/* Buttons */}
-      <div className="absolute bottom-6 w-full flex justify-center gap-2 pointer-events-auto">
+      <div className="absolute h-[3.4rem] bottom-6 w-full flex justify-center gap-2 pointer-events-auto">
         {EMOJIS.map((emoji) => (
           <button
             key={emoji}

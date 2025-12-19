@@ -282,6 +282,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
 
           for (let j = 0; j < correctAnswer.length; j++) {
             if (guess[i] === correctAnswer[j]) {
+              room.guesses[socket.id] = guess.toUpperCase()
               feedback.push({ letter: null, index: i })
             }
           }
@@ -295,7 +296,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
     socket.on("send-reaction", ({ roomId, emoji }: { roomId: string; emoji: string }) => {
       const room = rooms.get(roomId)
       if (!room) return
-  
+
       // Broadcast the reaction to everyone in the room
       io.to(roomId).emit("reaction-received", { playerId: socket.id, emoji })
     })

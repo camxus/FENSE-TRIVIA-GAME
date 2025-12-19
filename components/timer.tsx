@@ -30,7 +30,7 @@ export function Timer({ endTime, onEnd }: TimerProps) {
   return (
     <div
       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
-        isUrgent ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-primary text-primary-foreground"
+        isUrgent ? "bg-destructive text-primary-foreground animate-pulse" : "bg-primary text-primary-foreground"
       }`}
     >
       <Clock className="h-5 w-5" />

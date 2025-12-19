@@ -144,7 +144,7 @@ export default function OnlinePage() {
 
   if (gameState === "waiting") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 mb-[3rem]">
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle className="text-3xl">Waiting Room</CardTitle>
@@ -327,20 +327,25 @@ export default function OnlinePage() {
                 {currentCategory && (
                   <motion.div
                     key={currentCategory}
-                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
+                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={{ duration: 0.8, ease: "easeInOut" }}
                   >
-                    <span className="mb-6 text-2xl">New Category</span>
-                    <span className="text-4xl">{currentCategory}</span>
+                    <motion.span
+                      initial={{ opacity: 0, x: 100 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -100 }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                      className="text-4xl"
+                    >{currentCategory}</motion.span>
 
                     {/* Start Button */}
                     {isCreator && (
                       <Button
                         onClick={nextQuestion}
-                        className="mt-10 px-10 py-4 text-2xl"
+                        className="mt-10 px-10 py-4 text-foreground bg-background"
                         size="lg"
                       >
                         Start
@@ -356,10 +361,9 @@ export default function OnlinePage() {
               </AnimatePresence>
             </div>
 
-            <div>
-              {/* Optionally keep Scoreboard here for larger screens */}
+            {/* <div>
               <Scoreboard players={players} />
-            </div>
+            </div> */}
           </div>
         </div>
 
