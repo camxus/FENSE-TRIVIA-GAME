@@ -9,10 +9,12 @@
   },
   "dependencies": {
     "@vercel/analytics": "latest",
+    "dotenv": "^17.2.3",
     "http": "latest",
     "nodemon": "^3.1.10",
     "socket.io": "latest",
     "socket.io-client": "latest",
+    "tsconfig-paths": "^4.2.0",
     "url": "latest"
   },
   "devDependencies": {

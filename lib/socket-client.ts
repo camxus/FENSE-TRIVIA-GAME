@@ -6,8 +6,7 @@ let socket: Socket | null = null
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io("https://fense-trivia-game.fly.dev", {
-    // socket = io("http://localhost:3000", {
+    socket = io(process.env.NEXT_PUBLIC_SOCKET_IO_HOST_URL || "http://localhost:3000", {
       autoConnect: true,
     })
   }

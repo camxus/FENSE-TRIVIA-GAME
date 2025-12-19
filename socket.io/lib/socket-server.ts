@@ -1,6 +1,12 @@
 import type { Server as HTTPServer } from "http"
 import { Server as SocketIOServer, type Socket } from "socket.io"
-import questions from "./questions.json" with { type: "json" };
+import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 export interface Player {
   id: string
   name: string
@@ -31,11 +37,14 @@ export interface Category {
   questions: Question[]
 }
 
-export const QUESTIONS: Category[] = questions
+let QUESTIONS: Category[] = []
 
 const rooms = new Map<string, Room>()
 
-export function initializeSocketServer(httpServer: HTTPServer) {
+export async function initializeSocketServer(httpServer: HTTPServer) {
+  QUESTIONS = await fetchQuestionsFromFirestore()
+  console.log(QUESTIONS)
+
   const io = new SocketIOServer(httpServer, {
     cors: {
       origin: "*",
@@ -45,7 +54,7 @@ export function initializeSocketServer(httpServer: HTTPServer) {
 
   io.on("connection", (socket: Socket) => {
     console.log("Client connected:", socket.id)
-
+    console.log(QUESTIONS)
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
@@ -335,3 +344,56 @@ function generatePlayerId(): string {
   return `player-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }
 
+export interface Question {
+  id: string
+  question: string
+  answer: string
+  timeLimit: number
+}
+
+export interface Category {
+  id: string
+  categoryName: string
+  questions: Question[]
+}
+
+// Your Firebase configuration from environment variables
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+}
+
+// Initialize Firebase only once
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+
+// Exports
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+
+
+export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
+  const categoriesSnapshot = await getDocs(collection(db, "questions"))
+  const categories: Category[] = []
+  
+  for (const categoryDoc of categoriesSnapshot.docs) {
+    const data = categoryDoc.data()
+    const questions: Question[] = (data.questions || []).map((q: any, index: number) => ({
+      id: q.id || `${categoryDoc.id}-${index}`,
+      question: q.question,
+      answer: q.answer,
+      timeLimit: q.timeLimit,
+    }))
+    
+    categories.push({
+      id: categoryDoc.id,
+      categoryName: data.categoryName,
+      questions,
+    })
+  }
+
+  return categories
+}
