@@ -43,7 +43,6 @@ const rooms = new Map<string, Room>()
 
 export async function initializeSocketServer(httpServer: HTTPServer) {
   QUESTIONS = await fetchQuestionsFromFirestore()
-  console.log(QUESTIONS)
 
   const io = new SocketIOServer(httpServer, {
     cors: {
