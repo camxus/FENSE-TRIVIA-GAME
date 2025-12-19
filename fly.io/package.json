@@ -5,8 +5,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node server.ts",
-    "lint": "next lint",
-    "start": "NODE_ENV=production ts-node dist/server.ts"
+    "start": "NODE_ENV=production ts-node server.ts"
   },
   "dependencies": {
     "@vercel/analytics": "latest",
