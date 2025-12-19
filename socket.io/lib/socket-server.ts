@@ -23,6 +23,7 @@ export interface Room {
   leaderId?: string
   timerEndTime?: number
   guesses: Record<string, { value: string, endTime: number }>
+  questions: Category[] | null
 }
 
 export interface Question {
@@ -67,6 +68,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         isActive: false,
         leaderId: mode === "in-person" ? socket.id : undefined,
         guesses: {},
+        questions: null
       }
 
       rooms.set(roomId, room)
@@ -87,8 +89,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const player: Player = { id: socket.id, name: playerName, score: 0 }
       room.players.push(player)
 
-      const category = getCategory(room.currentCategoryIndex)
-      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+      const category = getCategory(room.questions, room.currentCategoryIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
 
       socket.join(roomId)
       io.to(roomId).emit("player-joined", { player, room })
@@ -111,9 +113,10 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       room.currentQuestionIndex = 0
       room.currentCategoryIndex = 0
       room.guesses = {}
+      room.questions = getRoomQuestions(QUESTIONS)
 
-      const category = getCategory(room.currentCategoryIndex)
-      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+      const category = getCategory(room.questions, room.currentCategoryIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
 
       if (!question) return
 
@@ -130,7 +133,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const room = rooms.get(roomId)
       if (!room) return
 
-      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
       if (!question) return
 
       const correctAnswer = question.answer.toUpperCase()
@@ -172,10 +175,10 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const nextCategoryIndex = room.currentCategoryIndex + 1;
       const nextQuestionIndex = room.currentQuestionIndex + 1;
 
-      const nextQuestion = getQuestion(room.currentCategoryIndex, nextQuestionIndex);
+      const nextQuestion = getQuestion(room.questions, room.currentCategoryIndex, nextQuestionIndex);
 
       if (!nextQuestion) {
-        const nextCategory = getCategory(nextCategoryIndex);
+        const nextCategory = getCategory(room.questions, nextCategoryIndex);
 
         io.to(roomId).emit("category-ended", {
           players: room.players,
@@ -199,8 +202,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         room.currentQuestionIndex = nextQuestionIndex;
       }
 
-      const category = getCategory(room.currentCategoryIndex)
-      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+      const category = getCategory(room.questions, room.currentCategoryIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
 
       if (!question) return
 
@@ -277,7 +280,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         const room = rooms.get(roomId)
         if (!room || !room.isActive) return
 
-        const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+        const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
         if (!question) return
 
         const correctAnswer = question.answer.toUpperCase()
@@ -326,12 +329,12 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
   return io
 }
 
-function getCategory(categoryIndex: number | null): Category | null {
-  return categoryIndex !== null ? QUESTIONS[categoryIndex] || null : null
+function getCategory(questions: Category[] | null, categoryIndex: number | null): Category | null {
+  return (questions && categoryIndex !== null) ? questions[categoryIndex] || null : null
 }
 
-function getQuestion(categoryIndex: number | null, questionIndex: number | null): Question | null {
-  return categoryIndex !== null && questionIndex !== null ? QUESTIONS[categoryIndex].questions[questionIndex] || null : null
+function getQuestion(questions: Category[] | null, categoryIndex: number | null, questionIndex: number | null): Question | null {
+  return (questions && categoryIndex !== null && questionIndex !== null) ? questions[categoryIndex].questions[questionIndex] || null : null
 }
 
 function generateRoomCode(): string {
@@ -340,6 +343,27 @@ function generateRoomCode(): string {
 
 function generatePlayerId(): string {
   return `player-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+}
+
+export function getRoomQuestions(QUESTIONS: Category[]): Category[] {
+  // Helper: Fisher-Yates shuffle
+  const shuffleArray = <T>(array: T[]): T[] => {
+    const arr = [...array]; // copy to avoid mutating original
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  // Shuffle questions inside each category and limit to 5 questions
+  const categoriesShuffled = QUESTIONS.map((category) => ({
+    ...category,
+    questions: shuffleArray(category.questions).slice(0, 5),
+  }));
+
+  // Shuffle the order of categories and limit to 5 categories
+  return shuffleArray(categoriesShuffled).slice(0, 5);
 }
 
 export interface Question {
@@ -376,7 +400,7 @@ export const db = getFirestore(app)
 export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   const categoriesSnapshot = await getDocs(collection(db, "questions"))
   const categories: Category[] = []
-  
+
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
     const questions: Question[] = (data.questions || []).map((q: any, index: number) => ({
@@ -385,7 +409,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
       answer: q.answer,
       timeLimit: q.timeLimit,
     }))
-    
+
     categories.push({
       id: categoryDoc.id,
       categoryName: data.categoryName,
