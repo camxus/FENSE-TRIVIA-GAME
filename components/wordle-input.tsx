@@ -71,7 +71,7 @@ export function WordleInput({
     } else if (feedbackItem.letter === null) {
       return "bg-yellow-400 text-white"; // exists elsewhere
     }
-    return "bg-gray-400 text-white"; // not in word
+    return "bg-gray-100 text-white"; // not in word
   };
 
   return (

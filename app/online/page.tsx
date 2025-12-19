@@ -24,8 +24,11 @@ import Image from "next/image";
 import { WordleInput } from "@/components/wordle-input";
 import { AnimatePresence, motion } from "framer-motion"
 import { Reactions } from "@/components/reactions";
+import { useSearchParams } from "next/navigation";
 
 export default function OnlinePage() {
+  const searchParams = useSearchParams();
+
   const {
     gameState,
     players,
@@ -50,7 +53,7 @@ export default function OnlinePage() {
 
   // Local state for form inputs
   const [playerName, setPlayerName] = useState("");
-  const [roomId, setRoomId] = useState("");
+  const [roomId, setRoomId] = useState(searchParams.get("room") || "");
 
   const handleCreateRoom = () => {
     if (!playerName.trim()) return;
@@ -67,356 +70,397 @@ export default function OnlinePage() {
     queryAnswer(guess);
   }, [guess]);
 
-  if (gameState === "lobby") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-            <CardTitle className="text-3xl">Online Mode</CardTitle>
-            <CardDescription>
-              Create or join a room to play with friends
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="playerName">Your Name</Label>
-              <Input
-                id="playerName"
-                placeholder="Enter your name"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreateRoom()}
-              />
-            </div>
+  const renderGameState = () => {
 
-            <div className="space-y-4">
-              <Button
-                onClick={handleCreateRoom}
-                disabled={!playerName.trim()}
-                className="w-full"
-                size="lg"
+    if (gameState === "lobby") {
+      return (
+        <motion.div
+          key={gameState}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2"
               >
-                Create New Room
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or</span>
-                </div>
-              </div>
-
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Link>
+              <CardTitle className="text-3xl">Online Mode</CardTitle>
+              <CardDescription>
+                Create or join a room to play with friends
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="roomId">Room Code</Label>
+                <Label htmlFor="playerName">Your Name</Label>
                 <Input
-                  id="roomId"
-                  placeholder="Enter room code"
-                  value={roomId}
-                  onChange={(e) => setRoomId(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === "Enter" && handleJoinRoom()}
+                  id="playerName"
+                  placeholder="Enter your name"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateRoom()}
                 />
               </div>
 
-              <Button
-                onClick={handleJoinRoom}
-                disabled={!playerName.trim() || !roomId.trim()}
-                variant="secondary"
-                className="w-full"
-                size="lg"
-              >
-                Join Room
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+              <div className="space-y-4">
+                <Button
+                  onClick={handleCreateRoom}
+                  disabled={!playerName.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  Create New Room
+                </Button>
 
-  if (gameState === "waiting") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 mb-[3rem]">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-3xl">Waiting Room</CardTitle>
-            <CardDescription>
-              Share the room code with your friends
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <RoomCodeDisplay roomCode={currentRoomId} />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
 
-            <PlayerList players={players} />
+                <div className="space-y-2">
+                  <Label htmlFor="roomId">Room Code</Label>
+                  <Input
+                    id="roomId"
+                    placeholder="Enter room code"
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && handleJoinRoom()}
+                  />
+                </div>
 
-            {isCreator && (
-              <Button
-                onClick={() => startGame()}
-                disabled={players.length < 1}
-                className="w-full"
-                size="lg"
-              >
-                Start Game
-              </Button>
-            )}
+                <Button
+                  onClick={handleJoinRoom}
+                  disabled={!playerName.trim() || !roomId.trim()}
+                  variant="secondary"
+                  className="w-full"
+                  size="lg"
+                >
+                  Join Room
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      );
+    }
 
-            {!isCreator && (
-              <p className="text-center text-muted-foreground">
-                Waiting for the host to start the game...
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
-      </div>
-    );
-  }
+    if (gameState === "waiting") {
+      return (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 mb-[3rem]">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-3xl">Waiting Room</CardTitle>
+              <CardDescription>
+                Share the room code with your friends
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <RoomCodeDisplay roomCode={currentRoomId} />
 
-  if (gameState === "playing") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <div className="max-w-6xl mx-auto space-y-6 py-8">
-          <div className="flex items-center justify-between">
-            <Image
-              src="/fense-logo.png"
-              alt="Fense Logo"
-              width={150}
-              height={150}
-            />
-            <div className="text-sm text-muted-foreground">
-              Room: {currentRoomId}
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {currentQuestion && (
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardDescription className="text-sm">
-                        {currentQuestion.category}
-                      </CardDescription>
-                      {timerEndTime && (
-                        <Timer endTime={timerEndTime} onEnd={endQuestion} />
-                      )}
-                    </div>
-                    <CardTitle className="text-3xl text-balance">
-                      {currentQuestion.question}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="guess">Your Answer</Label>
-
-                      <div className="flex justify-center">
-                        <WordleInput
-                          length={currentQuestion.answerLenght}
-                          value={guess}
-                          onChange={setGuess}
-                          feedback={feedback}
-                        />
-                      </div>
-                    </div>
-
-                    {correctAnswer && (
-                      <WordleGuess guess={guess} answer={correctAnswer} />
-                    )}
-
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            <div>
-              <Scoreboard players={players} />
-            </div>
-          </div>
-        </div>
-
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
-
-      </div>
-    );
-  }
-
-  if (gameState === "question-ended") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <div className="max-w-6xl mx-auto space-y-6 py-8">
-          <div className="flex items-center justify-between">
-            <Image
-              src="/fense-logo.png"
-              alt="Fense Logo"
-              width={150}
-              height={150}
-            />
-            <div className="text-sm text-muted-foreground">
-              Room: {currentRoomId}
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {currentQuestion && (
-                <QuestionDisplay
-                  question={currentQuestion}
-                  showAnswer={true}
-                  answer={correctAnswer}
-                />
-              )}
-
-              {guess && <WordleGuess guess={guess} answer={correctAnswer} />}
+              <PlayerList players={players} />
 
               {isCreator && (
-                <Button onClick={nextQuestion} className="w-full" size="lg">
-                  Next Question
+                <Button
+                  onClick={() => startGame()}
+                  disabled={players.length < 1}
+                  className="w-full"
+                  size="lg"
+                >
+                  Start Game
                 </Button>
               )}
 
               {!isCreator && (
                 <p className="text-center text-muted-foreground">
-                  Waiting for next question...
+                  Waiting for the host to start the game...
                 </p>
               )}
+            </CardContent>
+          </Card>
+          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+        </motion.div>
+      );
+    }
+
+    if (gameState === "playing") {
+      return (
+        <motion.div
+          key={gameState}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6 py-8">
+            <div className="flex items-center justify-between">
+              <Image
+                src="/fense-logo.png"
+                alt="Fense Logo"
+                width={150}
+                height={150}
+              />
+              <div className="text-sm text-muted-foreground">
+                Room: {currentRoomId}
+              </div>
             </div>
 
-            <div>
-              <Scoreboard players={players} />
-            </div>
-          </div>
-        </div>
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {currentQuestion && (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardDescription className="text-sm">
+                          {currentQuestion.category}
+                        </CardDescription>
+                        {timerEndTime && (
+                          <Timer endTime={timerEndTime} onEnd={endQuestion} />
+                        )}
+                      </div>
+                      <CardTitle className="text-3xl text-balance">
+                        {currentQuestion.question}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="guess">Your Answer</Label>
 
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+                        <div className="flex justify-center">
+                          <WordleInput
+                            length={currentQuestion.answerLenght}
+                            value={guess}
+                            onChange={setGuess}
+                            feedback={feedback}
+                          />
+                        </div>
+                      </div>
 
-      </div>
-    );
-  }
+                      {correctAnswer && (
+                        <WordleGuess guess={guess} answer={correctAnswer} />
+                      )}
 
-  // Inside OnlinePage component
-  if (gameState === "new-category") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <div className="max-w-6xl mx-auto space-y-6 py-8">
-          <div className="flex items-center justify-between">
-            <Image
-              src="/fense-logo.png"
-              alt="Fense Logo"
-              width={150}
-              height={150}
-            />
-            <div className="text-sm text-muted-foreground">
-              Room: {currentRoomId}
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6 relative">
-              <Scoreboard players={players} />
-
-              {/* Fullscreen Category Animation */}
-              <AnimatePresence>
-                {currentCategory && (
-                  <motion.div
-                    key={currentCategory}
-                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                  >
-                    <motion.span
-                      initial={{ opacity: 0, x: 100 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      transition={{ duration: 0.8, ease: "easeInOut" }}
-                      className="text-4xl"
-                    >{currentCategory}</motion.span>
-
-                    {/* Start Button */}
-                    {isCreator && (
-                      <Button
-                        onClick={nextQuestion}
-                        className="mt-10 px-10 py-4 text-foreground bg-background"
-                        size="lg"
-                      >
-                        Start
-                      </Button>
-                    )}
-                    {!isCreator && (
-                      <p className="mt-10 text-xl text-muted-foreground">
-                        Waiting for host to start...
-                      </p>
-                    )}
-                  </motion.div>
+                    </CardContent>
+                  </Card>
                 )}
-              </AnimatePresence>
+              </div>
+
+              <div>
+                <Scoreboard players={players} />
+              </div>
+            </div>
+          </div>
+
+          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
+        </motion.div>
+      );
+    }
+
+    if (gameState === "question-ended") {
+      return (
+        <motion.div
+          key={gameState}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }} className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6 py-8">
+            <div className="flex items-center justify-between">
+              <Image
+                src="/fense-logo.png"
+                alt="Fense Logo"
+                width={150}
+                height={150}
+              />
+              <div className="text-sm text-muted-foreground">
+                Room: {currentRoomId}
+              </div>
             </div>
 
-            {/* <div>
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {currentQuestion && (
+                  <QuestionDisplay
+                    question={currentQuestion}
+                    showAnswer={true}
+                    answer={correctAnswer}
+                  />
+                )}
+
+                {guess && <WordleGuess guess={guess} answer={correctAnswer} />}
+
+                {isCreator && (
+                  <Button onClick={nextQuestion} className="w-full" size="lg">
+                    Next Question
+                  </Button>
+                )}
+
+                {!isCreator && (
+                  <p className="text-center text-muted-foreground">
+                    Waiting for next question...
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Scoreboard players={players} />
+              </div>
+            </div>
+          </div>
+
+          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
+        </motion.div>
+      );
+    }
+
+    // Inside OnlinePage component
+    if (gameState === "new-category") {
+      return (
+        <motion.div
+          key={gameState}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6 py-8">
+            <div className="flex items-center justify-between">
+              <Image
+                src="/fense-logo.png"
+                alt="Fense Logo"
+                width={150}
+                height={150}
+              />
+              <div className="text-sm text-muted-foreground">
+                Room: {currentRoomId}
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6 relative">
+                <Scoreboard players={players} />
+
+                {/* Fullscreen Category Animation */}
+                <AnimatePresence>
+                  {currentCategory && (
+                    <motion.div
+                      key={currentCategory}
+                      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                    >
+                      <motion.span
+                        initial={{ opacity: 0, x: 100 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -100 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                        className="text-4xl"
+                      >{currentCategory}</motion.span>
+
+                      {/* Start Button */}
+                      {isCreator && (
+                        <Button
+                          onClick={nextQuestion}
+                          className="mt-10 px-10 py-4 text-foreground bg-background"
+                          size="lg"
+                        >
+                          Start
+                        </Button>
+                      )}
+                      {!isCreator && (
+                        <p className="mt-10 text-xl text-muted-foreground">
+                          Waiting for host to start...
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* <div>
               <Scoreboard players={players} />
             </div> */}
-          </div>
-        </div>
-
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
-
-      </div>
-    );
-  }
-
-  if (gameState === "game-ended") {
-    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-4xl text-center">Game Over!</CardTitle>
-            <CardDescription className="text-center">
-              Final Leaderboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              {sortedPlayers.map((player, index) => (
-                <div
-                  key={player.id}
-                  className={`p-4 rounded-lg flex items-center justify-between ${index === 0
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold">#{index + 1}</span>
-                    <span className="text-lg">{player.name}</span>
-                  </div>
-                  <span className="text-2xl font-bold">{player.score}</span>
-                </div>
-              ))}
             </div>
+          </div>
 
-            <Link href="/online">
-              <Button className="w-full" size="lg">
-                Play Again
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
 
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+        </motion.div>
+      );
+    }
 
-      </div>
-    );
+    if (gameState === "game-ended") {
+      const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+      return (
+        <motion.div
+          key={gameState}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-4xl text-center">Game Over!</CardTitle>
+              <CardDescription className="text-center">
+                Final Leaderboard
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                {sortedPlayers.map((player, index) => (
+                  <div
+                    key={player.id}
+                    className={`p-4 rounded-lg flex items-center justify-between ${index === 0
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary"
+                      }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl font-bold">#{index + 1}</span>
+                      <span className="text-lg">{player.name}</span>
+                    </div>
+                    <span className="text-2xl font-bold">{player.score}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/online">
+                <Button className="w-full" size="lg">
+                  Play Again
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
+        </motion.div>
+      );
+    }
   }
 
-  return null;
+  return (
+    <AnimatePresence mode="wait">
+      {renderGameState()}
+    </AnimatePresence>
+  )
 }
