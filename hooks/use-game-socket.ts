@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { getSocket } from "@/lib/socket-client"
 import type { Socket } from "socket.io-client"
+import { useRef } from "react"
+import { useGameAudio } from "./use-game-audio"
 
 interface AnswerFeedback {
   letter: string | null
@@ -59,7 +61,15 @@ interface UseGameSocketReturn {
 }
 
 export function useGameSocket(): UseGameSocketReturn {
+  const {
+    gameStartedAudioRef,
+    playGameStartedAudio,
+    playLoserAudio,
+    playFinalWinnerAudio,
+  } = useGameAudio();
+
   const [gameState, setGameState] = useState<GameState>("lobby")
+  const [playerId, setPlayerId] = useState<string>()
   const [players, setPlayers] = useState<Player[]>([])
   const [currentCategory, setCurrentCategory] = useState<string | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
@@ -72,10 +82,37 @@ export function useGameSocket(): UseGameSocketReturn {
   const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
 
+  useEffect(() => {
+    if (gameState === "playing") {
+      playGameStartedAudio(true)
+    } else {
+      gameStartedAudioRef.current?.pause();
+    }
+  }, [gameState]);
+
+  useEffect(() => {
+    if (gameState !== "game-ended") return;
+
+    const currentPlayer = players.find((p) => p.id === playerId);
+    if (!currentPlayer) return;
+
+    const scores = players.map((p) => p.score);
+    const maxScore = Math.max(...scores);
+    const minScore = Math.min(...scores);
+
+    if (currentPlayer.score === maxScore) {
+      playFinalWinnerAudio();
+    } else if (currentPlayer.score === minScore) {
+      playLoserAudio();
+    }
+  }, [gameState, playerId, players]);
+
   // Initialize socket connection
   useEffect(() => {
     const socketInstance = getSocket()
     setSocket(socketInstance)
+
+    setPlayerId(socketInstance.id)
 
     // Set up all socket event listeners
     socketInstance.on("room-created", ({ roomId, room }) => {
@@ -162,7 +199,6 @@ export function useGameSocket(): UseGameSocketReturn {
     })
 
     socketInstance.on("player-added", ({ room }) => {
-      console.log("added")
       setPlayers(room.players)
     })
 

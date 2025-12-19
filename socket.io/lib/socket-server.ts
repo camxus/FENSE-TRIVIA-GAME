@@ -53,7 +53,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
   io.on("connection", (socket: Socket) => {
     console.log("Client connected:", socket.id)
-    console.log(QUESTIONS)
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()

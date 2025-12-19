@@ -1,3 +1,4 @@
+import { useGameAudio } from "@/hooks/use-game-audio";
 import { useState, useEffect, useRef } from "react";
 
 interface AnswerFeedback {
@@ -22,12 +23,26 @@ export function WordleInput({
   disabled,
   onKeyDown,
 }: WordleInputProps) {
+  const { playCorrectAnswerAudio } = useGameAudio()
   const [letters, setLetters] = useState<string[]>(Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     setLetters(value.split("").concat(Array(length - value.length).fill("")));
   }, [value, length]);
+
+
+  useEffect(() => {
+    if (!feedback || feedback.length === 0) return;
+
+    const allCorrect = feedback.every(
+      (f) => f.letter !== null && f.letter === letters[f.index]
+    );
+
+    if (allCorrect) {
+      playCorrectAnswerAudio()
+    }
+  }, [letters, feedback]);
 
   const handleChange = (idx: number, val: string) => {
     const newLetters = [...letters];

@@ -443,11 +443,9 @@ export default function OnlinePage() {
                 ))}
               </div>
 
-              <Link href="/online">
-                <Button className="w-full" size="lg">
-                  Play Again
-                </Button>
-              </Link>
+              <Button className="w-full" size="lg" onClick={() => startGame()}>
+                Play Again
+              </Button>
             </CardContent>
           </Card>
 
