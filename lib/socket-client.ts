@@ -6,7 +6,7 @@ let socket: Socket | null = null
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io("https://fense-trivia-game.vercel.app/", {
+    socket = io("https://fense-trivia-game.fly.dev", {
       autoConnect: true,
     })
   }
