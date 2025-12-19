@@ -16,7 +16,7 @@ export interface Room {
   isActive: boolean
   leaderId?: string
   timerEndTime?: number
-  guesses: Record<string, string>
+  guesses: Record<string, { value: string, endTime: number }>
 }
 
 export interface Question {
@@ -119,20 +119,24 @@ export function initializeSocketServer(httpServer: HTTPServer) {
       })
     })
 
-    // End question
-    socket.on("end-question", ({ roomId }: { roomId: string }) => {
+    function endQuestion(roomId: string) {
       const room = rooms.get(roomId)
       if (!room) return
-      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
-      const correctAnswer = question?.answer.toUpperCase()
 
-      // Calculate scores for online mode
+      const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
+      if (!question) return
+
+      const correctAnswer = question.answer.toUpperCase()
+
       if (room.mode === "online") {
         Object.entries(room.guesses).forEach(([playerId, guess]) => {
-          if (guess === correctAnswer) {
+          if (guess.value === correctAnswer) {
             const player = room.players.find((p) => p.id === playerId)
             if (player) {
-              const timeBonus = Math.max(0, Math.floor((room.timerEndTime! - Date.now()) / 1000))
+              const timeBonus = Math.max(
+                0,
+                Math.floor((guess.endTime!) / 1000)
+              )
               player.score += 100 + timeBonus * 10
             }
           }
@@ -146,6 +150,10 @@ export function initializeSocketServer(httpServer: HTTPServer) {
       })
 
       room.guesses = {}
+    }
+
+    socket.on("end-question", ({ roomId }) => {
+      endQuestion(roomId)
     })
 
     // Next question
@@ -260,38 +268,42 @@ export function initializeSocketServer(httpServer: HTTPServer) {
       "query-answer",
       ({ roomId, guess }: { roomId: string; guess: string }) => {
         const room = rooms.get(roomId)
-        if (!room || !room.isActive) {
-          socket.emit("error", { message: "Room not active or not found" })
-          return
-        }
+        if (!room || !room.isActive) return
 
         const question = getQuestion(room.currentCategoryIndex, room.currentQuestionIndex)
         if (!question) return
 
         const correctAnswer = question.answer.toUpperCase()
-        const feedback: { letter: string | null; index: number }[] = []
-
         guess = guess.toUpperCase()
 
-        // First pass: correct letters
+        const feedback: { letter: string | null; index: number }[] = []
+
+        let isCorrect = guess === correctAnswer
+
+        // Wordle-style feedback
         for (let i = 0; i < guess.length; i++) {
           if (guess[i] === correctAnswer[i]) {
             feedback.push({ letter: guess[i], index: i })
-            continue
-          }
-
-          for (let j = 0; j < correctAnswer.length; j++) {
-            if (guess[i] === correctAnswer[j]) {
-              room.guesses[socket.id] = guess.toUpperCase()
-              feedback.push({ letter: null, index: i })
-            }
+          } else if (correctAnswer.includes(guess[i])) {
+            feedback.push({ letter: null, index: i })
           }
         }
 
+        // Store guess
+        if (isCorrect) room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+
         socket.emit("answer-feedback", { feedback })
+
+        // have all players guessed correctly?
+        const allCorrect = room.players.every(
+          (player) => room.guesses[player.id].value === correctAnswer
+        )
+
+        if (allCorrect) {
+          endQuestion(roomId)
+        }
       }
     )
-
     // Player sends a reaction
     socket.on("send-reaction", ({ roomId, emoji }: { roomId: string; emoji: string }) => {
       const room = rooms.get(roomId)
@@ -322,3 +334,4 @@ function generateRoomCode(): string {
 function generatePlayerId(): string {
   return `player-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }
+
