@@ -110,6 +110,7 @@ export default function OnlinePage() {
               <div className="space-y-4">
                 <Button
                   onClick={handleCreateRoom}
+                  variant={roomId ? "secondary" : "default"}
                   disabled={!playerName.trim()}
                   className="w-full"
                   size="lg"
@@ -140,7 +141,7 @@ export default function OnlinePage() {
                 <Button
                   onClick={handleJoinRoom}
                   disabled={!playerName.trim() || !roomId.trim()}
-                  variant="secondary"
+                  variant={roomId ? "default" : "secondary"}
                   className="w-full"
                   size="lg"
                 >
@@ -383,6 +384,7 @@ export default function OnlinePage() {
                             opacity: 1,
                             y: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5], // bounce up 10px and back
                           }}
+                          whileHover={{ y: 5 }}
                           transition={{
                             opacity: { delay: 0.2, duration: 0.5 }, // fade in once
                             y: {
