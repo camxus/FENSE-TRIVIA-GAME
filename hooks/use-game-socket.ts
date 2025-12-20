@@ -148,11 +148,9 @@ export function useGameSocket(): UseGameSocketReturn {
       setPlayers(room.players)
     })
 
-    socketInstance.on("game-started", ({ category, question, timerEndTime }) => {
+    socketInstance.on("game-started", ({ category }) => {
       setCurrentCategory(category)
-      setCurrentQuestion(question)
-      setTimerEndTime(timerEndTime)
-      setGameState("playing")
+      setGameState("new-category")
       setGuess("")
       setCorrectAnswer("")
     })

@@ -110,22 +110,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       if (!room) return
 
       room.isActive = true
-      room.currentQuestionIndex = 0
       room.currentCategoryIndex = 0
+      room.currentQuestionIndex = -1
       room.guesses = {}
       room.questions = getRoomQuestions(QUESTIONS)
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
-      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
-
-      if (!question) return
-
-      room.timerEndTime = Date.now() + question.timeLimit * 1000
 
       io.to(roomId).emit("game-started", {
         category: category?.categoryName,
-        question: { ...question, answer: undefined, answerLenght: question.answer.length },
-        timerEndTime: room.timerEndTime,
       })
     })
 
@@ -177,7 +170,9 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
       const nextQuestion = getQuestion(room.questions, room.currentCategoryIndex, nextQuestionIndex);
 
-      if (!nextQuestion) {
+      if (!!nextQuestion) {
+        room.currentQuestionIndex = nextQuestionIndex;
+      } else {
         const nextCategory = getCategory(room.questions, nextCategoryIndex);
 
         io.to(roomId).emit("category-ended", {
@@ -198,8 +193,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         }
 
         return;
-      } else {
-        room.currentQuestionIndex = nextQuestionIndex;
       }
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
