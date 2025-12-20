@@ -267,13 +267,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       rooms.forEach((room, roomId) => {
         const playerIndex = room.players.findIndex((p) => p.id === socket.id)
         if (playerIndex !== -1) {
-          room.players.splice(playerIndex, 1)
-          io.to(roomId).emit("player-left", { playerId: socket.id, room })
-
-          // Delete room if empty
-          if (room.players.length === 0) {
-            rooms.delete(roomId)
-          }
           io.to(roomId).emit("chat-message", {
             id: crypto.randomUUID(),
             roomId,
@@ -282,6 +275,14 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
             message: `${room.players[playerIndex].name} left the room`,
             timestamp: Date.now(),
           } satisfies ChatMessage)
+
+          room.players.splice(playerIndex, 1)
+          io.to(roomId).emit("player-left", { playerId: socket.id, room })
+
+          // Delete room if empty
+          if (room.players.length === 0) {
+            rooms.delete(roomId)
+          }
         }
       })
     })
