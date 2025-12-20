@@ -12,8 +12,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Fense - Multiplayer Trivia Game",
-  description: "Play trivia with friends online or in-person",
+  title: "Fense - The Game",
   generator: "v0.app",
 }
 
