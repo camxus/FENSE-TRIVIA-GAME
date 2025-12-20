@@ -62,8 +62,9 @@ interface UseGameSocketReturn {
 
 export function useGameSocket(): UseGameSocketReturn {
   const {
-    gameStartedAudioRef,
+    questionStartedAudioRef,
     playGameStartedAudio,
+    playQuestionStartedAudio,
     playLoserAudio,
     playFinalWinnerAudio,
   } = useGameAudio();
@@ -88,9 +89,9 @@ export function useGameSocket(): UseGameSocketReturn {
 
   useEffect(() => {
     if (gameState === "playing") {
-      playGameStartedAudio(true)
+      playQuestionStartedAudio(true)
     } else {
-      gameStartedAudioRef.current?.pause();
+      questionStartedAudioRef.current?.pause();
     }
   }, [gameState]);
 
@@ -149,6 +150,7 @@ export function useGameSocket(): UseGameSocketReturn {
     })
 
     socketInstance.on("game-started", ({ category }) => {
+      playGameStartedAudio()
       setCurrentCategory(category)
       setGameState("new-category")
       setGuess("")
@@ -168,6 +170,7 @@ export function useGameSocket(): UseGameSocketReturn {
     socketInstance.on("category-ended", ({ nextCategory, players }) => {
       setCurrentCategory(nextCategory)
       setPlayers(players)
+      playGameStartedAudio()
       setGameState("new-category")
     })
 

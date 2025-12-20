@@ -2,16 +2,27 @@ import { useRef } from "react";
 
 export function useGameAudio() {
   const gameStartedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const questionStartedAudioRef = useRef<HTMLAudioElement | null>(null);
   const loserAudioRef = useRef<HTMLAudioElement | null>(null);
   const correctAnswerAudioRef = useRef<HTMLAudioElement | null>(null);
   const winnerAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const playGameStartedAudio = (loop: boolean = true) => {
     if (!gameStartedAudioRef.current) {
-      gameStartedAudioRef.current = new Audio("/question-started.wav");
+      gameStartedAudioRef.current = new Audio("/game-started.wav");
       gameStartedAudioRef.current.loop = loop;
     }
     const audio = gameStartedAudioRef.current;
+    audio.currentTime = 0;
+    audio.play().catch((err) => console.error("Failed to play audio:", err));
+  };
+
+  const playQuestionStartedAudio = (loop: boolean = true) => {
+    if (!questionStartedAudioRef.current) {
+      questionStartedAudioRef.current = new Audio("/question-started.wav");
+      questionStartedAudioRef.current.loop = loop;
+    }
+    const audio = questionStartedAudioRef.current;
     audio.currentTime = 0;
     audio.play().catch((err) => console.error("Failed to play audio:", err));
   };
@@ -47,10 +58,11 @@ export function useGameAudio() {
   };
 
   return {
-    gameStartedAudioRef,
+    questionStartedAudioRef,
     loserAudioRef,
     winnerAudioRef,
     playGameStartedAudio,
+    playQuestionStartedAudio,
     playLoserAudio,
     playCorrectAnswerAudio,
     playFinalWinnerAudio,
