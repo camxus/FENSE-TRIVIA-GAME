@@ -12,6 +12,7 @@ jobs:
   deploy:
     name: Deploy to Fly.io
     runs-on: ubuntu-latest
+    environment: Production
     defaults:
       run:
         working-directory: socket.io  # Make fly.io the working directory
