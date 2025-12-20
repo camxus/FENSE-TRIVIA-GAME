@@ -279,16 +279,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           if (room.players.length === 0) {
             rooms.delete(roomId)
           }
+          io.to(roomId).emit("chat-message", {
+            id: crypto.randomUUID(),
+            roomId,
+            senderId: null,
+            senderName: "System",
+            message: `${room.players[playerIndex].name} left the room`,
+            timestamp: Date.now(),
+          } satisfies ChatMessage)
         }
-
-        io.to(roomId).emit("chat-message", {
-          id: crypto.randomUUID(),
-          roomId,
-          senderId: null,
-          senderName: "System",
-          message: `${room.players[playerIndex].name} left the room`,
-          timestamp: Date.now(),
-        } satisfies ChatMessage)
       })
     })
 
