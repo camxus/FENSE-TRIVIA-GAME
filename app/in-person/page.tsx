@@ -12,6 +12,7 @@ import Image from "next/image"
 import { GameModes, useGameSocket } from "@/hooks/use-game-socket";
 import { AnimatePresence, motion } from "framer-motion"
 import { Scoreboard } from "@/components/scoreboard"
+import { Reactions } from "@/components/reactions"
 
 export default function InPersonPage() {
   const [leaderName, setLeaderName] = useState("")
@@ -30,6 +31,7 @@ export default function InPersonPage() {
     currentRoomId,
     isCreator,
     feedback,
+    activeReactions,
     setGuess,
     createRoom,
     joinRoom,
@@ -40,7 +42,8 @@ export default function InPersonPage() {
     addPlayer,
     removePlayer,
     stopTimer,
-    assignPoints
+    assignPoints,
+    sendReaction
   } = useGameSocket();
 
   const handleAssingPoints = () => {
@@ -343,24 +346,48 @@ export default function InPersonPage() {
                 {currentCategory && (
                   <motion.div
                     key={currentCategory}
-                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
+                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={{ duration: 0.8, ease: "easeInOut" }}
                   >
-                    <span className="mb-6 text-2xl">New Category</span>
-                    <span className="text-4xl">{currentCategory}</span>
+                    <motion.span
+                      initial={{ opacity: 0, x: 100 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -100 }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                      className="text-4xl"
+                    >{currentCategory}</motion.span>
 
                     {/* Start Button */}
                     {isCreator && (
-                      <Button
-                        onClick={nextQuestion}
-                        className="mt-10 px-10 py-4 text-2xl"
-                        size="lg"
+                      <motion.div
+                        initial={{ opacity: 0, y: 0 }}
+                        animate={{
+                          opacity: 1,
+                          y: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5], // bounce up 10px and back
+                        }}
+                        whileHover={{ y: 5 }}
+                        transition={{
+                          opacity: { delay: 0.2, duration: 0.5 }, // fade in once
+                          y: {
+                            delay: 0.2,
+                            duration: 2.3,
+                            repeat: Infinity,
+                            repeatType: "loop",
+                            ease: "easeInOut",
+                          }, // infinite bounce
+                        }}
                       >
-                        Start
-                      </Button>
+                        <Button
+                          onClick={nextQuestion}
+                          size="lg"
+                          className="mt-10 px-10 py-4 text-foreground bg-background hover:bg-background/40"
+                        >
+                          Start
+                        </Button>
+                      </motion.div>
                     )}
                     {!isCreator && (
                       <p className="mt-10 text-xl text-muted-foreground">
@@ -372,17 +399,21 @@ export default function InPersonPage() {
               </AnimatePresence>
             </div>
 
-            <div>
-              {/* Optionally keep Scoreboard here for larger screens */}
-              <Scoreboard players={players} />
-            </div>
+            {/* <div>
+                    <Scoreboard players={players} />
+                  </div> */}
           </div>
         </div>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
       </motion.div>
     );
   }
 
   if (gameState === "game-ended") {
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
     return (
       <motion.div
         key={gameState}
@@ -391,12 +422,42 @@ export default function InPersonPage() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-        <Scoreboard cardTitle="Game Over!" cardDescription="Final Leaderboard" players={players} />
-        <Link href="/in-person">
-          <Button className="w-full" size="lg">
-            Play Again
-          </Button>
-        </Link>
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-4xl text-center">Game Over!</CardTitle>
+            <CardDescription className="text-center">
+              Final Leaderboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              {sortedPlayers.map((player, index) => (
+                <div
+                  key={player.id}
+                  className={`p-4 rounded-lg flex items-center justify-between ${index === 0
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                    }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl font-bold">#{index + 1}</span>
+                    <span className="text-lg">{player.name}</span>
+                  </div>
+                  <span className="text-2xl font-bold">{player.score}</span>
+                </div>
+              ))}
+            </div>
+
+            <Link href="/in-person">
+              <Button className="w-full" size="lg">
+                Play Again
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+
       </motion.div>
     )
   }

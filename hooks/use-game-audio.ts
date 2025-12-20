@@ -7,17 +7,17 @@ export function useGameAudio() {
   const correctAnswerAudioRef = useRef<HTMLAudioElement | null>(null);
   const winnerAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const playGameStartedAudio = (loop: boolean = true) => {
+  const playGameStartedAudio = () => {
     if (!gameStartedAudioRef.current) {
       gameStartedAudioRef.current = new Audio("/game-started.wav");
-      gameStartedAudioRef.current.loop = loop;
+      gameStartedAudioRef.current.loop = false;
     }
     const audio = gameStartedAudioRef.current;
     audio.currentTime = 0;
     audio.play().catch((err) => console.error("Failed to play audio:", err));
   };
 
-  const playQuestionStartedAudio = () => {
+  const playQuestionStartedAudio = (loop: boolean = true) => {
     if (!questionStartedAudioRef.current) {
       questionStartedAudioRef.current = new Audio("/question-started.wav");
       questionStartedAudioRef.current.loop = false;
