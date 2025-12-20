@@ -14,8 +14,10 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Scoreboard } from "@/components/scoreboard"
 import { Reactions } from "@/components/reactions"
 import { useGame } from "@/context/game-context"
+import { useRouter } from "next/navigation"
 
 export default function InPersonPage() {
+  const router = useRouter()
   const [leaderName, setLeaderName] = useState("")
   const [newPlayerName, setNewPlayerName] = useState("")
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
@@ -449,7 +451,7 @@ export default function InPersonPage() {
               ))}
             </div>
 
-            <Link href="/in-person">
+            <Link href="" onClick={() => router.refresh()}>
               <Button className="w-full" size="lg">
                 Play Again
               </Button>
