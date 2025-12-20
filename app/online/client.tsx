@@ -156,6 +156,7 @@ export default function OnlinePage() {
     if (gameState === "waiting") {
       return (
         <motion.div
+          key={gameState}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -376,13 +377,31 @@ export default function OnlinePage() {
 
                       {/* Start Button */}
                       {isCreator && (
-                        <Button
-                          onClick={nextQuestion}
-                          className="mt-10 px-10 py-4 text-foreground bg-background"
-                          size="lg"
+                        <motion.div
+                          initial={{ opacity: 0, y: 0 }}
+                          animate={{
+                            opacity: 1,
+                            y: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5], // bounce up 10px and back
+                          }}
+                          transition={{
+                            opacity: { delay: 0.2, duration: 0.5 }, // fade in once
+                            y: {
+                              delay: 0.2,
+                              duration: 2.3,
+                              repeat: Infinity,
+                              repeatType: "loop",
+                              ease: "easeInOut",
+                            }, // infinite bounce
+                          }}
                         >
-                          Start
-                        </Button>
+                          <Button
+                            onClick={nextQuestion}
+                            size="lg"
+                            className="mt-10 px-10 py-4 text-foreground bg-background hover:bg-background/40"
+                          >
+                            Start
+                          </Button>
+                        </motion.div>
                       )}
                       {!isCreator && (
                         <p className="mt-10 text-xl text-muted-foreground">
