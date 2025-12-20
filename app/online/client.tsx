@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GameModes, useGameSocket } from "@/hooks/use-game-socket";
+import { GameModes } from "@/hooks/use-game-socket";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +25,7 @@ import { WordleInput } from "@/components/wordle-input";
 import { AnimatePresence, motion } from "framer-motion"
 import { Reactions } from "@/components/reactions";
 import { useSearchParams } from "next/navigation";
+import { useGame } from "@/context/game-context";
 
 export default function OnlinePage() {
   const searchParams = useSearchParams();
@@ -49,7 +50,7 @@ export default function OnlinePage() {
     nextQuestion,
     queryAnswer,
     sendReaction,
-  } = useGameSocket();
+  } = useGame();
 
   // Local state for form inputs
   const [playerName, setPlayerName] = useState("");
@@ -193,7 +194,7 @@ export default function OnlinePage() {
               )}
             </CardContent>
           </Card>
-          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+          <Reactions />
         </motion.div>
       );
     }
@@ -266,7 +267,7 @@ export default function OnlinePage() {
             </div>
           </div>
 
-          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+          <Reactions />
 
         </motion.div>
       );
@@ -324,7 +325,7 @@ export default function OnlinePage() {
             </div>
           </div>
 
-          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+          <Reactions />
 
         </motion.div>
       );
@@ -421,7 +422,7 @@ export default function OnlinePage() {
             </div>
           </div>
 
-          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+          <Reactions />
 
         </motion.div>
       );
@@ -470,7 +471,7 @@ export default function OnlinePage() {
             </CardContent>
           </Card>
 
-          <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+          <Reactions />
 
         </motion.div>
       );

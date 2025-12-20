@@ -9,10 +9,11 @@ import { Timer } from "@/components/timer"
 import { ArrowLeft, Plus, Trash2, Play, StopCircle, SkipForward } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { GameModes, useGameSocket } from "@/hooks/use-game-socket";
+import { GameModes } from "@/hooks/use-game-socket";
 import { AnimatePresence, motion } from "framer-motion"
 import { Scoreboard } from "@/components/scoreboard"
 import { Reactions } from "@/components/reactions"
+import { useGame } from "@/context/game-context"
 
 export default function InPersonPage() {
   const [leaderName, setLeaderName] = useState("")
@@ -44,7 +45,7 @@ export default function InPersonPage() {
     stopTimer,
     assignPoints,
     sendReaction
-  } = useGameSocket();
+  } = useGame();
 
   const handleAssingPoints = () => {
     assignPoints(selectedPlayerId!, pointsToAssign)
@@ -405,7 +406,7 @@ export default function InPersonPage() {
           </div>
         </div>
 
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+        <Reactions />
 
       </motion.div>
     );
@@ -456,7 +457,7 @@ export default function InPersonPage() {
           </CardContent>
         </Card>
 
-        <Reactions activeReactions={activeReactions} onClick={sendReaction} />
+        <Reactions />
 
       </motion.div>
     )

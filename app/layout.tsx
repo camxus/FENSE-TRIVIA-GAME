@@ -5,6 +5,8 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import LogoIntro from "@/components/logo-intro"
 import { AnimatePresence } from "framer-motion"
+import { GameProvider } from "@/context/game-context"
+import { ModalProvider } from "@/components/layout/modal-provider"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -23,9 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <AnimatePresence mode="wait">
-          {children}
-        </AnimatePresence>
+        <GameProvider>
+          <ModalProvider>
+            <AnimatePresence mode="wait">
+              {children}
+            </AnimatePresence>
+          </ModalProvider>
+        </GameProvider>
         <LogoIntro />
         <Analytics />
       </body>

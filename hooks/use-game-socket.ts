@@ -34,7 +34,16 @@ export enum GameModes {
 
 export interface Reaction { id: string; emoji: string }
 
+export interface ChatMessage {
+  id: string
+  roomId: string
+  senderId: string | null
+  senderName: string
+  message: string
+  timestamp: number
+}
 interface UseGameSocketReturn {
+  playerId: string | undefined
   gameState: GameState
   players: Player[]
   currentCategory: string | null
@@ -46,6 +55,7 @@ interface UseGameSocketReturn {
   isCreator: boolean
   feedback: AnswerFeedback[] | null
   activeReactions: Reaction[]
+  chatMessages: ChatMessage[]
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
@@ -58,6 +68,7 @@ interface UseGameSocketReturn {
   stopTimer: (roomId?: string) => void
   assignPoints: (selectedPlayerId: string, pointsToAssign: string, roomId?: string) => void
   sendReaction: (emoji: string, roomId?: string) => void
+  sendChatMessage: (message: string, roomId?: string) => void
 }
 
 export function useGameSocket(): UseGameSocketReturn {
@@ -82,10 +93,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
-
-  useEffect(() => {
-    setPlayerId(socket?.id)
-  }, [socket])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -116,6 +124,10 @@ export function useGameSocket(): UseGameSocketReturn {
   useEffect(() => {
     const socketInstance = getSocket()
     setSocket(socketInstance)
+
+    socketInstance.on("connect", () => {
+      setPlayerId(socketInstance.id)
+    });
 
     // Set up all socket event listeners
     socketInstance.on("room-created", ({ roomId, room }) => {
@@ -224,9 +236,13 @@ export function useGameSocket(): UseGameSocketReturn {
       }, 2000)
     })
 
+    socketInstance.on("chat-message", (message: ChatMessage) => {
+      setChatMessages((prev) => [...prev, message])
+    })
 
     // Clean up all listeners on unmount
     return () => {
+      socketInstance.off("connect")
       socketInstance.off("room-created")
       socketInstance.off("room-joined")
       socketInstance.off("player-joined")
@@ -244,6 +260,7 @@ export function useGameSocket(): UseGameSocketReturn {
       socketInstance.off("player-removed")
       socketInstance.off("points-updated")
       socketInstance.off("reaction-recieved")
+      socketInstance.off("chat-message")
     }
   }, [])
 
@@ -298,27 +315,39 @@ export function useGameSocket(): UseGameSocketReturn {
   }
 
   const removePlayer = (playerId: string, roomId = currentRoomId) => {
-    const socket = getSocket()
+    if (!socket || !playerId.trim()) return
     socket.emit("remove-player", { roomId, playerId })
   }
 
   const stopTimer = (roomId = currentRoomId) => {
-    const socket = getSocket()
+    if (!socket || !roomId) return
     socket.emit("stop-timer", { roomId })
   }
 
   const assignPoints = (selectedPlayerId: string, pointsToAssign: string, roomId = currentRoomId) => {
-    if (!selectedPlayerId || !pointsToAssign) return
-    const socket = getSocket()
+    if (!socket || !selectedPlayerId || !pointsToAssign) return
     socket.emit("assign-points", { roomId, playerId: selectedPlayerId, points: Number.parseInt(pointsToAssign) })
   }
 
   const sendReaction = (emoji: string, roomId = currentRoomId) => {
-    const socket = getSocket()
+    if (!socket || !emoji || !roomId) return
     socket?.emit("send-reaction", { emoji, roomId })
   }
 
+  const sendChatMessage = useCallback(
+    (message: string, roomId = currentRoomId) => {
+      if (!socket || !roomId || !message.trim()) return
+
+      socket.emit("send-chat-message", {
+        roomId,
+        message: message.trim(),
+      })
+    },
+    [socket, currentRoomId]
+  )
+
   return {
+    playerId,
     gameState,
     players,
     currentCategory,
@@ -330,6 +359,7 @@ export function useGameSocket(): UseGameSocketReturn {
     isCreator,
     feedback,
     activeReactions,
+    chatMessages,
     setGuess,
     createRoom,
     joinRoom,
@@ -341,6 +371,7 @@ export function useGameSocket(): UseGameSocketReturn {
     removePlayer,
     stopTimer,
     assignPoints,
-    sendReaction
+    sendReaction,
+    sendChatMessage
   }
 }
