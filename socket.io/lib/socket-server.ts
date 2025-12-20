@@ -38,6 +38,15 @@ export interface Category {
   questions: Question[]
 }
 
+export interface ChatMessage {
+  id: string
+  roomId: string
+  senderId: string | null // null = system
+  senderName: string
+  message: string
+  timestamp: number
+}
+
 let QUESTIONS: Category[] = []
 
 const rooms = new Map<string, Room>()
@@ -101,6 +110,14 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         timerEndTime: room.timerEndTime,
       })
 
+      io.to(roomId).emit("chat-message", {
+        id: crypto.randomUUID(),
+        roomId,
+        senderId: null,
+        senderName: "System",
+        message: `${playerName} joined the room`,
+        timestamp: Date.now(),
+      } satisfies ChatMessage)
       console.log(`${playerName} joined room ${roomId}`)
     })
 
@@ -263,6 +280,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
             rooms.delete(roomId)
           }
         }
+
+        io.to(roomId).emit("chat-message", {
+          id: crypto.randomUUID(),
+          roomId,
+          senderId: null,
+          senderName: "System",
+          message: `${room.players[playerIndex].name} left the room`,
+          timestamp: Date.now(),
+        } satisfies ChatMessage)
       })
     })
 
@@ -315,9 +341,30 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       // Broadcast the reaction to everyone in the room
       io.to(roomId).emit("reaction-received", { playerId: socket.id, emoji })
     })
+
+    socket.on(
+      "send-chat-message",
+      ({ roomId, message }: { roomId: string; message: string }) => {
+        const room = rooms.get(roomId)
+        if (!room) return
+
+        const player = room.players.find((p) => p.id === socket.id)
+        if (!player) return
+
+        const chatMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          roomId,
+          senderId: socket.id,
+          senderName: player.name,
+          message: message.trim(),
+          timestamp: Date.now(),
+        }
+
+        io.to(roomId).emit("chat-message", chatMessage)
+      }
+    )
+
   })
-
-
 
   return io
 }
