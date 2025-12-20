@@ -204,6 +204,8 @@ export function useGameSocket(): UseGameSocketReturn {
     })
 
     socketInstance.on("timer-stopped", () => {
+      questionStartedAudioRef.current?.pause();
+
       setTimerEndTime(null)
     })
 
