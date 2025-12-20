@@ -103,10 +103,13 @@ export function Reactions() {
 
   // Update unread count whenever new messages arrive
   useEffect(() => {
-    if (!lastSeenMessageId && chatMessages.length > 0) {
+    if (!lastSeenMessageId && !!chatMessages.length) {
       setUnreadCount(chatMessages.length);
     } else if (lastSeenMessageId) {
       const index = chatMessages.findIndex((m) => m.id === lastSeenMessageId);
+      
+      if (!chatMessages[index].senderId) { return }
+
       setUnreadCount(chatMessages.length - (index + 1));
     }
   }, [chatMessages, lastSeenMessageId]);
