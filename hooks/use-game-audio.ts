@@ -17,10 +17,10 @@ export function useGameAudio() {
     audio.play().catch((err) => console.error("Failed to play audio:", err));
   };
 
-  const playQuestionStartedAudio = (loop: boolean = true) => {
+  const playQuestionStartedAudio = () => {
     if (!questionStartedAudioRef.current) {
       questionStartedAudioRef.current = new Audio("/question-started.wav");
-      questionStartedAudioRef.current.loop = loop;
+      questionStartedAudioRef.current.loop = false;
     }
     const audio = questionStartedAudioRef.current;
     audio.currentTime = 0;
