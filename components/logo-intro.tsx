@@ -33,6 +33,7 @@ export default function LogoIntro() {
       <motion.div
       className="w-screen h-screen fixed top-0 z-100 flex items-center justify-center bg-background pointer-events-none"
       initial={{ opacity: 1 }}
+      style={{ willChange: "opacity" }}
       animate={containerControls}
     >
       <motion.img

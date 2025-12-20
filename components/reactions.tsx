@@ -171,7 +171,7 @@ export function Reactions() {
         {reactions.map((r) => (
           <motion.div
             key={r.id}
-            className="absolute"
+            className="absolute will-change-auto"
             style={{
               fontSize: r.size,
               left: r.xStart,
@@ -196,7 +196,7 @@ export function Reactions() {
         {chatBubbles.map((bubble) => (
           <motion.div
             key={bubble.id}
-            className="absolute px-4 py-2 bg-white/90 text-black rounded-xl shadow-lg pointer-events-none"
+            className="absolute px-4 py-2 bg-white/90 text-black rounded-xl shadow-lg pointer-events-none will-change-auto"
             style={{
               left: bubble.xStart,
               bottom: 0,
