@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'socket.io/**'   # Only triggers when files inside /fly.io change
-  workflow_dispatch:   # Manual trigger option
 
 jobs:
   deploy:
