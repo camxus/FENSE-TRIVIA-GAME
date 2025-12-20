@@ -83,6 +83,10 @@ export function useGameSocket(): UseGameSocketReturn {
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
 
   useEffect(() => {
+    setPlayerId(socket?.id)
+  }, [socket])
+
+  useEffect(() => {
     if (gameState === "playing") {
       playGameStartedAudio(true)
     } else {
@@ -111,8 +115,6 @@ export function useGameSocket(): UseGameSocketReturn {
   useEffect(() => {
     const socketInstance = getSocket()
     setSocket(socketInstance)
-
-    setPlayerId(socketInstance.id)
 
     // Set up all socket event listeners
     socketInstance.on("room-created", ({ roomId, room }) => {
