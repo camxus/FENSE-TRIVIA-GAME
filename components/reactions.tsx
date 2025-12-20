@@ -118,7 +118,7 @@ export function Reactions() {
 
   const removeChatBubble = (id: string) => {
     setChatBubbles((prev) => prev.filter((b) => b.id !== id));
-    seenChatIds.current.delete(id); // optional if you want to allow repeat bubbles
+    seenBubbleIds.current.delete(id); // optional if you want to allow repeat bubbles
   };
 
   const handleShowChat = () => {
