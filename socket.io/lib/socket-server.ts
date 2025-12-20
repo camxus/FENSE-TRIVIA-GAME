@@ -62,7 +62,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
   })
 
   io.on("connection", (socket: Socket) => {
-    console.log("Client connected:", socket.id)
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
@@ -84,7 +83,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       socket.join(roomId)
 
       socket.emit("room-created", { roomId, room })
-      console.log(`Room ${roomId} created by ${playerName}`)
     })
 
     socket.on("join-room", ({ roomId, playerName }: { roomId: string; playerName: string }) => {
@@ -118,7 +116,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         message: `${playerName} joined the room`,
         timestamp: Date.now(),
       } satisfies ChatMessage)
-      console.log(`${playerName} joined room ${roomId}`)
     })
 
     // Start game
@@ -266,8 +263,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     })
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id)
-
       // Remove player from rooms
       rooms.forEach((room, roomId) => {
         const playerIndex = room.players.findIndex((p) => p.id === socket.id)
