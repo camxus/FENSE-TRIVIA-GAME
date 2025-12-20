@@ -5,6 +5,7 @@ import { getSocket } from "@/lib/socket-client"
 import type { Socket } from "socket.io-client"
 import { useRef } from "react"
 import { useGameAudio } from "./use-game-audio"
+import { InternalBubble } from "@/components/reactions"
 
 interface AnswerFeedback {
   letter: string | null
@@ -56,6 +57,7 @@ interface UseGameSocketReturn {
   feedback: AnswerFeedback[] | null
   activeReactions: Reaction[]
   chatMessages: ChatMessage[]
+  activeMessages: ChatMessage[]
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
@@ -94,6 +96,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -238,6 +241,11 @@ export function useGameSocket(): UseGameSocketReturn {
 
     socketInstance.on("chat-message", (message: ChatMessage) => {
       setChatMessages((prev) => [...prev, message])
+      setActiveMessages((prev) => [...prev, message])
+      // Remove reaction after 2 seconds
+      setTimeout(() => {
+        setActiveMessages((prev) => prev.filter((m) => m.id !== message.id))
+      }, 2000)
     })
 
     // Clean up all listeners on unmount
@@ -360,6 +368,7 @@ export function useGameSocket(): UseGameSocketReturn {
     feedback,
     activeReactions,
     chatMessages,
+    activeMessages,
     setGuess,
     createRoom,
     joinRoom,

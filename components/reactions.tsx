@@ -19,7 +19,7 @@ interface InternalReaction extends Reaction {
   yEnd: number;
 }
 
-interface InternalBubble {
+export interface InternalBubble {
   id: string;
   message: string;
   senderName: string;
@@ -33,7 +33,7 @@ const EMOJIS = ["👍", "❤️", "😂", "😮", "🎉", "🔥"];
 
 export function Reactions() {
   const modal = useModal();
-  const { chatMessages, activeReactions, sendReaction } = useGame();
+  const { chatMessages, activeMessages, activeReactions, sendReaction } = useGame();
 
   const [reactions, setReactions] = useState<InternalReaction[]>([]);
   const seenReactionIds = useRef(new Set<string>());
@@ -79,7 +79,7 @@ export function Reactions() {
   useEffect(() => {
     const newBubbles: InternalBubble[] = [];
 
-    for (const msg of chatMessages) {
+    for (const msg of activeMessages) {
       if (seenBubbleIds.current.has(msg.id)) continue;
 
       seenBubbleIds.current.add(msg.id);
@@ -98,7 +98,7 @@ export function Reactions() {
     if (newBubbles.length) {
       setChatBubbles((prev) => [...prev, ...newBubbles]);
     }
-  }, [chatMessages, viewport]);
+  }, [activeMessages, viewport]);
 
 
   // Update unread count whenever new messages arrive
