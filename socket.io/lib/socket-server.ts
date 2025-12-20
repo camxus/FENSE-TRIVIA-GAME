@@ -102,7 +102,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       socket.join(roomId)
       io.to(roomId).emit("player-joined", { player, room })
       socket.emit("room-joined", {
-        room,
+        room: {...room, questions: null},
         category: category?.categoryName,
         question: { ...question, answer: undefined, answerLenght: question?.answer.length },
         timerEndTime: room.timerEndTime,

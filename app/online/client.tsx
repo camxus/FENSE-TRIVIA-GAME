@@ -140,7 +140,7 @@ export default function OnlinePage() {
                 </div>
 
                 <Button
-                  onClick={handleJoinRoom}
+                  onClick={() => handleJoinRoom()}
                   disabled={!playerName.trim() || !roomId.trim()}
                   variant={roomId ? "default" : "secondary"}
                   className="w-full"
