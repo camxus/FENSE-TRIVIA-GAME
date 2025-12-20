@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'socket.io/**'   # Only triggers when files inside /fly.io change
+      - "socket.io/**" # Only triggers when files inside /fly.io change
 
 jobs:
   deploy:
@@ -14,7 +14,7 @@ jobs:
     environment: Production
     defaults:
       run:
-        working-directory: socket.io  # Make fly.io the working directory
+        working-directory: socket.io # Make fly.io the working directory
 
     steps:
       # Checkout repository
@@ -35,10 +35,12 @@ jobs:
       # Build project (if needed)
       - name: Build project
         run: npm run build
-
+        
       # Install Fly CLI
       - name: Install Fly CLI
-        run: curl -L https://fly.io/install.sh | sh
+        run: |
+          curl -L https://fly.io/install.sh | sh
+          echo "$HOME/.fly/bin" >> $GITHUB_PATH   # <-- Important
 
       # Authenticate Fly
       - name: Authenticate Fly
