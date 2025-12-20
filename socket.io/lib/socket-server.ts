@@ -319,7 +319,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
         // have all players guessed correctly?
         const allCorrect = room.players.every(
-          (player) => room.guesses[player.id].value === correctAnswer
+          (player) => room.guesses[player.id]?.value === correctAnswer
         )
 
         if (allCorrect) {
