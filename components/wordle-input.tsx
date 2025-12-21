@@ -92,7 +92,7 @@ export function WordleInput({
   };
 
   const getBgColor = (idx: number) => {
-    if (!feedback) return "bg-background";
+    if (!feedback || letters.length !== length) return "bg-background";
     const feedbackItem = feedback.find((f) => f.index === idx);
     if (!feedbackItem) return "bg-background";
 
