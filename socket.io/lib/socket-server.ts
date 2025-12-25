@@ -102,9 +102,14 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       socket.join(roomId)
       io.to(roomId).emit("player-joined", { player, room })
       socket.emit("room-joined", {
-        room: {...room, questions: null},
+        room: { ...room, questions: null },
         category: category?.categoryName,
-        question: { ...question, answer: undefined, answerLenght: question?.answer.length },
+        question: {
+          ...question,
+          answer: undefined,
+          answerLenght: question?.answer.split(" ")
+            .map(word => word.length)
+        },
         timerEndTime: room.timerEndTime,
       })
 
@@ -169,7 +174,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       room.guesses = {}
     }
 
-    socket.on("end-question", ({ roomId }) => {
+    socket.on("end-question", ({ roomId }: { roomId: string }) => {
       endQuestion(roomId)
     })
 
@@ -218,7 +223,12 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
       io.to(roomId).emit("next-question", {
         category: category?.categoryName,
-        question: { ...question, answer: undefined, answerLenght: question.answer.length },
+        question: {
+          ...question,
+          answer: undefined,
+          answerLenght: question.answer.split(" ")
+            .map(word => word.length)
+        },
         timerEndTime: room.timerEndTime,
       })
     })

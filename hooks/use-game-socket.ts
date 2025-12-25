@@ -23,7 +23,7 @@ interface Question {
   question: string
   category: string
   timeLimit: number
-  answerLenght: number
+  answerLenght: number[]
 }
 
 type GameState = "lobby" | "waiting" | "playing" | "question-ended" | "new-category" | "game-ended" | "setup"

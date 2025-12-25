@@ -13,7 +13,8 @@ interface WordleInputProps {
   feedback?: AnswerFeedback[] | null;
   disabled?: boolean;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  gap?: number; // optional gap in px
+  gap?: number;       // gap between letters
+  wordGap?: number;  // gap between words
 }
 
 export function WordleInput({
@@ -23,17 +24,30 @@ export function WordleInput({
   feedback = [],
   disabled,
   onKeyDown,
-  gap = 8, // default 8px
+  gap = 8,
+  wordGap = 24,
 }: WordleInputProps) {
+  const wordLengths = Array.isArray(length) ? length : [length];
+  const totalLength = wordLengths.reduce((a, b) => a + b, 0);
+
   const { playCorrectAnswerAudio } = useGameAudio();
-  const [letters, setLetters] = useState<string[]>(Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [inputSize, setInputSize] = useState<number>(48);
 
+  const [letters, setLetters] = useState<string[]>(
+    Array(totalLength).fill("")
+  );
+
   useEffect(() => {
-    setLetters(value.split("").concat(Array(length - value.length).fill("")));
-  }, [value, length]);
+    setLetters(
+      value
+        .split("")
+        .slice(0, totalLength)
+        .concat(Array(totalLength - value.length).fill(""))
+    );
+  }, [value, totalLength]);
+
 
   useEffect(() => {
     if (!feedback || feedback.length === 0) return;
@@ -51,16 +65,20 @@ export function WordleInput({
   useEffect(() => {
     const handleResize = () => {
       if (!containerRef.current) return;
+
       const containerWidth = containerRef.current.clientWidth;
-      const totalGap = gap * (length - 1);
-      const size = (containerWidth - totalGap) / length;
+      const letterGaps = gap * (totalLength - 1);
+      const wordGaps = wordGap * (wordLengths.length - 1);
+      const size =
+        (containerWidth - letterGaps - wordGaps) / totalLength;
+
       setInputSize(size);
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [length, gap]);
+  }, [totalLength, gap, wordGap, wordLengths.length]);
 
   const handleChange = (idx: number, val: string) => {
     const newLetters = [...letters];
@@ -105,23 +123,52 @@ export function WordleInput({
   };
 
   return (
-    <div ref={containerRef} className="flex gap-2 flex-nowrap">
-      {letters.map((letter, idx) => (
-        <input
-          key={idx}
-          ref={(el) => { inputRefs.current[idx] = el }}
-          type="text"
-          maxLength={1}
-          value={letter}
-          disabled={disabled}
-          onChange={(e) => handleChange(idx, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e, idx)}
-          style={{ width: inputSize, height: inputSize, caretColor: "transparent" }}
-          className={`text-center text-2xl font-bold border ${getBgColor(
-            idx
-          )} border-gray-300 rounded`}
-        />
-      ))}
+    <div
+      ref={containerRef}
+      className="flex items-center flex-nowrap"
+      style={{ gap: wordGap }}
+    >
+      {wordLengths.map((wordLen, wordIdx) => {
+        const wordStart =
+          wordLengths.slice(0, wordIdx).reduce((a, b) => a + b, 0);
+
+        return (
+          <div
+            key={wordIdx}
+            className="flex"
+            style={{ gap }}
+          >
+            {Array.from({ length: wordLen }).map((_, i) => {
+              const idx = wordStart + i;
+
+              return (
+                <input
+                  key={idx}
+                  ref={(el) => (inputRefs.current[idx] = el)}
+                  type="text"
+                  maxLength={1}
+                  value={letters[idx]}
+                  disabled={disabled}
+                  onChange={(e) => handleChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  style={{
+                    width: inputSize,
+                    height: inputSize,
+                    caretColor: "transparent",
+                  }}
+                  className={`text-center text-2xl font-bold border ${getBgColor(
+                    idx
+                  )} border-gray-300 rounded`}
+                />
+              );
+            })}
+
+            {wordIdx < wordLengths.length - 1 && (
+              <div style={{ width: wordGap }} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
