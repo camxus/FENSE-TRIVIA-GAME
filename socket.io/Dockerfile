@@ -1,49 +1,45 @@
 # syntax = docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
 ARG NODE_VERSION=22.21.1
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Node.js"
 
-# Node.js app lives here
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
+ENV NODE_ENV=production
 
-# Install pnpm
-ARG PNPM_VERSION=latest
-RUN npm install -g pnpm@$PNPM_VERSION
+# Enable Yarn v4 via Corepack
+RUN corepack enable && \
+    corepack prepare yarn@4.12.0 --activate && \
+    yarn --version
 
-
-# Throw-away build stage to reduce size of final image
+# Build stage
 FROM base AS build
 
-# Install packages needed to build node modules
+# Install build tools
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install node modules
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod=false
+# Copy Yarn & project files
+COPY package.json yarn.lock .yarnrc.yml .yarn ./
 
-# Copy application code
+# Install dependencies with frozen lockfile
+RUN yarn install --immutable
+
+# Copy app code
 COPY . .
 
 # Build application
-RUN pnpm run build
+RUN yarn build
 
-# Remove development dependencies
-RUN pnpm prune --prod
-
-
-# Final stage for app image
+# Final stage
 FROM base
 
-# Copy built application
+# Copy app from build stage
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "pnpm", "run", "start" ]
+
+CMD ["yarn", "start"]
