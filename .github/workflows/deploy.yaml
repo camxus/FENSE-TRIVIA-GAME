@@ -30,11 +30,11 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies
-        run: npm install
+        run: yarn install
 
       # Build project (if needed)
       - name: Build project
-        run: npm run build
+        run: yarn build
         
       # Install Fly CLI
       - name: Install Fly CLI
