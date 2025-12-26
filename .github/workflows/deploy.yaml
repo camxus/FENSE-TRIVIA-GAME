@@ -28,19 +28,13 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - name: Enable Yarn v4
-        run: |
-          corepack enable
-          corepack prepare yarn@4.12.0 --activate
-          yarn --version
-
       # Install dependencies
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm install
 
       # Build project (if needed)
       - name: Build project
-        run: yarn build
+        run: npm run build
         
       # Install Fly CLI
       - name: Install Fly CLI
