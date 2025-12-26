@@ -1,130 +1,145 @@
-# Fense - Multiplayer Trivia Game
+# Fense Trivia Game
 
-A real-time multiplayer trivia game built with Next.js, React, and Socket.IO.
+Fense Trivia Game is a fun, interactive quiz game where players test their knowledge across multiple categories. With a clean, responsive design and dynamic feedback, Fense Trivia combines classic trivia gameplay with modern UI features for a seamless gaming experience.
+
+---
 
 ## Features
 
-### Online Mode
-- Create or join rooms with shareable room codes
-- Real-time multiplayer gameplay
-- Wordle-style answer feedback (green/yellow/gray tiles)
-- Automatic scoring based on correctness and speed
-- Live scoreboard
-- Countdown timer for each question
+* **Multiple Categories** – Choose from a variety of trivia topics.
+* **Dynamic Question Display** – Supports single-word and multi-word answers with real-time input validation.
+* **Interactive Feedback** – Visual feedback for correct and incorrect letters, similar to Wordle.
+* **Audio Cues** – Play correct answer sounds to enhance user engagement.
+* **Responsive Layout** – Inputs adjust to screen size and wrap if necessary.
+* **Keyboard Navigation** – Supports typing, backspace, and arrow navigation.
+* **Real-Time Input Handling** – Each letter input is tracked individually, with focus automatically moving to the next cell.
 
-### In-Person Mode
-- Perfect for game nights with friends
-- Leader controls for managing the game
-- Add/remove players dynamically
-- Manual point assignment
-- Large question display for shared screens
-- Timer controls (start/stop)
+---
 
-## Getting Started
+## Installation
 
-### Installation
+1. Clone the repository:
 
-1. Install dependencies:
-\`\`\`bash
+```bash
+git clone https://github.com/yourusername/fense-trivia.git
+```
+
+2. Install dependencies:
+
+```bash
 npm install
-\`\`\`
+# or
+pnpm install
+# or
+yarn install
+```
 
-2. Run the development server:
-\`\`\`bash
+3. Start the development server:
+
+```bash
 npm run dev
-\`\`\`
+# or
+pnpm dev
+# or
+yarn dev
+```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+The game should now be available at `http://localhost:3000`.
 
-### How to Play
+---
 
-#### Online Mode
-1. Enter your name and create a new room or join an existing one with a room code
-2. Wait for other players to join
-3. The room creator starts the game
-4. Type your answer and submit before time runs out
-5. See Wordle-style feedback on your guess
-6. Points are awarded for correct answers with time bonuses
+## Socket.IO Server
 
-#### In-Person Mode
-1. The game leader creates a room
-2. Add all players who will participate
-3. Start the game to begin showing questions
-4. Display questions on a shared screen
-5. Players answer verbally or via their devices
-6. Leader manually assigns points to correct answers
-7. Leader advances to the next question
+The Fense Trivia Game uses **Socket.IO** for real-time multiplayer features, chat, and live updates. The Socket.IO server runs **separately** from the main frontend app.
 
-## Technology Stack
+### Steps to run the Socket.IO server
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Real-time**: Socket.IO
-- **Styling**: Tailwind CSS v4
-- **UI Components**: shadcn/ui
+1. Navigate to the `socket.io` folder:
 
-## Project Structure
+```bash
+cd /socket.io
+```
 
-\`\`\`
-├── app/
-│   ├── page.tsx              # Home page
-│   ├── online/page.tsx       # Online mode
-│   └── in-person/page.tsx    # In-person mode
-├── components/
-│   ├── ui/                   # shadcn/ui components
-│   ├── timer.tsx             # Countdown timer
-│   ├── scoreboard.tsx        # Player scoreboard
-│   ├── wordle-guess.tsx      # Wordle-style feedback
-│   ├── room-code-display.tsx # Room code display
-│   ├── player-list.tsx       # Player list component
-│   └── question-display.tsx  # Question display component
-├── lib/
-│   ├── socket-client.ts      # Socket.IO client
-│   ├── socket-server.ts      # Socket.IO server types
-│   └── game-utils.ts         # Game utility functions
-└── server.js                 # Custom Next.js server with Socket.IO
-\`\`\`
+2. Install dependencies:
 
-## Customization
+```bash
+pnpm install
+```
 
-### Adding Questions
+3. Start the development server:
 
-Edit the `QUESTIONS` array in `server.js` to add your own trivia questions:
+```bash
+pnpm dev
+```
 
-\`\`\`javascript
-{
-  id: "unique-id",
-  question: "Your question here",
-  answer: "ANSWER",
-  category: "Category",
-  timeLimit: 30
-}
-\`\`\`
+The server will typically be available at `http://localhost:3001` (or whichever port is configured).
 
-### Scoring System
+### Notes
 
-The default scoring system awards:
-- 100 base points for correct answers
-- 10 bonus points per second remaining on the timer
+* Make sure the frontend is configured to connect to this server. Example in `.env`:
 
-Modify the scoring logic in `server.js` under the `end-question` event handler.
+```
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+```
 
-## Deployment
+* The Socket.IO server must be running **before starting the frontend** to enable real-time features.
 
-To deploy to production:
+---
 
-1. Build the application:
-\`\`\`bash
-npm run build
-\`\`\`
+## Usage
 
-2. Start the production server:
-\`\`\`bash
-npm start
-\`\`\`
+1. Select a trivia category.
+2. Read the question displayed on the screen.
+3. Type your answer in the letter boxes.
+4. Correct letters will be highlighted in green, partially correct letters in yellow.
+5. Press backspace to delete letters or move back.
+6. Complete the question to see if you got it right.
 
-For deployment to Vercel or other platforms, ensure Socket.IO is properly configured for your hosting environment.
+---
+
+## Technologies
+
+* **React** / **Next.js** – Frontend framework for building UI.
+* **TypeScript** – Type safety and better development experience.
+* **Tailwind CSS / NativeWind** – Styling and layout.
+* **Framer Motion** – Animations for smoother interactions.
+* **Custom hooks** – For audio playback, state management, and input handling.
+
+---
+
+## File Structure
+
+```
+src/
+├─ components/      # WordleInput, QuestionCard, etc.
+├─ hooks/           # useGameAudio, useTriviaLogic
+├─ pages/           # App pages and routing
+├─ utils/           # Helper functions
+└─ styles/          # Tailwind / global styles
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! If you want to help improve Fense Trivia:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/my-feature`)
+3. Make your changes
+4. Commit your changes (`git commit -am 'Add new feature'`)
+5. Push to the branch (`git push origin feature/my-feature`)
+6. Open a Pull Request
+
+---
 
 ## License
 
-MIT
-# FENSE-TRIVIA-GAME
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Future Improvements
+
+* Multiplayer mode with live scoring.
+* Lead
