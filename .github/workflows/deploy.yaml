@@ -36,7 +36,7 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --immutable
 
       # Build project (if needed)
       - name: Build project
