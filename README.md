@@ -72,17 +72,17 @@ pnpm install
 pnpm dev
 ```
 
-The server will typically be available at `http://localhost:3001` (or whichever port is configured).
+The server will typically be available at `http://localhost:3000` (or whichever port is configured).
 
 ### Notes
 
 * Make sure the frontend is configured to connect to this server. Example in `.env`:
 
 ```
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3000
 ```
 
-* The Socket.IO server must be running **before starting the frontend** to enable real-time features.
+* The Socket.IO server must start running **via or before the frontend starts** to enable real-time features.
 
 ---
 
