@@ -51,6 +51,20 @@ let QUESTIONS: Category[] = []
 
 const rooms = new Map<string, Room>()
 
+const mockCategory: Category = {
+  id: "1",
+  categoryName: "Musique – Récompenses",
+  questions: [
+    {
+      id: "music-grammy-001",
+      question:
+        "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
+      answer: "LES GRAMMY AWARDS",
+      timeLimit: 20000000,
+    },
+  ],
+}
+
 export async function initializeSocketServer(httpServer: HTTPServer) {
   QUESTIONS = await fetchQuestionsFromFirestore()
 
@@ -445,6 +459,8 @@ export const db = getFirestore(app)
 export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   const categoriesSnapshot = await getDocs(collection(db, "questions"))
   const categories: Category[] = []
+
+  return [mockCategory]
 
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()

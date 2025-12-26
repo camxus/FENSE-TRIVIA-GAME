@@ -40,11 +40,12 @@ export function WordleInput({
   );
 
   useEffect(() => {
+    const clean = value.replace(/\s+/g, ""); // remove spaces
     setLetters(
-      value
-        .split("")
+      clean
         .slice(0, totalLength)
-        .concat(Array(totalLength - value.length).fill(""))
+        .split("") // convert to string[]
+        .concat(Array(totalLength - clean.length).fill(""))
     );
   }, [value, totalLength]);
 
@@ -63,30 +64,54 @@ export function WordleInput({
 
   // Dynamically calculate input width & height based on container
   useEffect(() => {
+
     const handleResize = () => {
       if (!containerRef.current) return;
 
       const containerWidth = containerRef.current.clientWidth;
-      const letterGaps = gap * (totalLength - 1);
+
+      // total space between letters inside words
+      const letterGaps = gap * (totalLength - wordLengths.length);
       const wordGaps = wordGap * (wordLengths.length - 1);
-      const size =
-        (containerWidth - letterGaps - wordGaps) / totalLength;
+
+      let size = Math.floor((containerWidth - letterGaps - wordGaps) / totalLength);
+
+      // trigger wrap if too small
+      size = size > 30 ? size : 30;
 
       setInputSize(size);
     };
 
-    handleResize();
+    handleResize(); // initial sizing
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [totalLength, gap, wordGap, wordLengths.length]);
 
+  const serializeWithSpaces = (letters: string[]) => {
+    let result = "";
+    let cursor = 0;
+
+    wordLengths.forEach((len, i) => {
+      result += letters.slice(cursor, cursor + len).join("");
+      cursor += len;
+      if (i < wordLengths.length - 1) {
+        result += " ";
+      }
+    });
+
+    return result;
+  };
+
   const handleChange = (idx: number, val: string) => {
     const newLetters = [...letters];
     newLetters[idx] = val.toUpperCase().slice(-1);
+    console.log(newLetters, inputRefs.current[idx + 1])
     setLetters(newLetters);
-    onChange(newLetters.join(""));
 
-    if (val && idx < length - 1) {
+    onChange(serializeWithSpaces(newLetters));
+
+    if (val && idx < totalLength - 1) {
       inputRefs.current[idx + 1]?.focus();
     }
   };
@@ -98,19 +123,28 @@ export function WordleInput({
     if (onKeyDown) onKeyDown(e);
 
     if (e.key === "Backspace") {
-      if (letters[idx]) {
-        const newLetters = [...letters];
+      e.preventDefault();
+
+      const newLetters = [...letters];
+
+      if (newLetters[idx]) {
+        // clear current cell
         newLetters[idx] = "";
         setLetters(newLetters);
-        onChange(newLetters.join(""));
+        onChange(serializeWithSpaces(newLetters));
       } else if (idx > 0) {
-        inputRefs.current[idx - 1]?.focus();
+        // move left & clear previous cell
+        const prevIdx = idx - 1;
+        newLetters[prevIdx] = "";
+        setLetters(newLetters);
+        onChange(serializeWithSpaces(newLetters));
+        inputRefs.current[prevIdx]?.focus();
       }
     }
   };
 
   const getBgColor = (idx: number) => {
-    if (!feedback || letters.length !== length) return "bg-background";
+    if (!feedback || letters.length !== totalLength) return "bg-background";
     const feedbackItem = feedback.find((f) => f.index === idx);
     if (!feedbackItem) return "bg-background";
 
@@ -125,8 +159,8 @@ export function WordleInput({
   return (
     <div
       ref={containerRef}
-      className="flex items-center flex-nowrap"
-      style={{ gap: wordGap }}
+      className="flex items-center flex-wrap justify-center w-full overflow-hidden"
+      style={{ gap: wordGap, rowGap: 16 }}
     >
       {wordLengths.map((wordLen, wordIdx) => {
         const wordStart =
@@ -146,7 +180,7 @@ export function WordleInput({
                   key={idx}
                   ref={(el) => {
                     inputRefs.current[idx] = el;
-                  }}        
+                  }}
                   type="text"
                   maxLength={1}
                   value={letters[idx]}
@@ -165,9 +199,6 @@ export function WordleInput({
               );
             })}
 
-            {wordIdx < wordLengths.length - 1 && (
-              <div style={{ width: wordGap }} />
-            )}
           </div>
         );
       })}
