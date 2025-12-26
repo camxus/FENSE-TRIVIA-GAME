@@ -9,9 +9,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Enable Yarn v4 via Corepack
+# Enable Yarn v4 via Corepack and use node_modules linker
 RUN corepack enable && \
     corepack prepare yarn@4.12.0 --activate && \
+    yarn config set nodeLinker node-modules && \
     yarn --version
 
 # Build stage
@@ -22,13 +23,13 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy Yarn & project files
-COPY package.json yarn.lock .yarnrc.yml .yarn ./
+# Copy only package files
+COPY package.json yarn.lock ./
 
-# Install dependencies with frozen lockfile
+# Install dependencies
 RUN yarn install --immutable
 
-# Copy app code
+# Copy application code
 COPY . .
 
 # Build application
