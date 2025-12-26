@@ -7,7 +7,7 @@ interface AnswerFeedback {
 }
 
 interface WordleInputProps {
-  length: number;
+  length: number[] | number;
   value: string;
   onChange: (val: string) => void;
   feedback?: AnswerFeedback[] | null;
@@ -144,7 +144,9 @@ export function WordleInput({
               return (
                 <input
                   key={idx}
-                  ref={(el) => (inputRefs.current[idx] = el)}
+                  ref={(el) => {
+                    inputRefs.current[idx] = el;
+                  }}        
                   type="text"
                   maxLength={1}
                   value={letters[idx]}

@@ -67,9 +67,16 @@ export default function OnlinePage() {
   };
 
   useEffect(() => {
-    if (!(currentQuestion?.answerLenght === guess.length)) return;
+    if (!currentQuestion) return;
+
+    const totalLength = Array.isArray(currentQuestion.answerLenght)
+      ? currentQuestion.answerLenght.reduce((a, b) => a + b, 0)
+      : currentQuestion.answerLenght;
+
+    if (guess.length !== totalLength) return;
+
     queryAnswer(guess);
-  }, [guess]);
+  }, [guess, currentQuestion]);
 
   const renderGameState = () => {
 
