@@ -142,4 +142,7 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 ## Future Improvements
 
 * Multiplayer mode with live scoring.
-* Lead
+* Leaderboards and achievements.
+* dditional question categories and difficulty levels.
+* Mobile-friendly swipe input for touch devices.
+
