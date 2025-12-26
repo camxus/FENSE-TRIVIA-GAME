@@ -1,45 +1,49 @@
 # syntax = docker/dockerfile:1
 
+# Adjust NODE_VERSION as desired
 ARG NODE_VERSION=22.21.1
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Node.js"
 
+# Node.js app lives here
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Set production environment
+ENV NODE_ENV="production"
 
-# Install Yarn v4 via npm
-RUN npm install -g yarn@4.12.0 && \
-    yarn config set nodeLinker node-modules && \
-    yarn --version
+# Install pnpm
+ARG PNPM_VERSION=latest
+RUN npm install -g pnpm@$PNPM_VERSION
 
-# Build stage
+
+# Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install build tools
+# Install packages needed to build node modules
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
-# Copy package files
-COPY package.json yarn.lock ./
-
-# Install dependencies
-RUN yarn install --immutable
+# Install node modules
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy application code
 COPY . .
 
-# Build app
-RUN yarn build
+# Build application
+RUN pnpm run build
 
-# Final stage
+# Remove development dependencies
+RUN pnpm prune --prod
+
+
+# Final stage for app image
 FROM base
 
-# Copy built app
+# Copy built application
 COPY --from=build /app /app
 
+# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-
-CMD ["yarn", "start"]
+CMD [ "pnpm", "run", "start" ]
