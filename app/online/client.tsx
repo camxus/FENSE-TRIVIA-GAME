@@ -70,7 +70,8 @@ export default function OnlinePage() {
     if (!currentQuestion) return;
 
     const totalLength = Array.isArray(currentQuestion.answerLenght)
-      ? currentQuestion.answerLenght.reduce((a, b) => a + b, 0)
+      ? currentQuestion.answerLenght.reduce((sum, len) => sum + len, 0) +
+      (currentQuestion.answerLenght.length - 1)
       : currentQuestion.answerLenght;
 
     if (guess.length !== totalLength) return;

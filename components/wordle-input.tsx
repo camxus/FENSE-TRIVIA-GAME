@@ -106,7 +106,6 @@ export function WordleInput({
   const handleChange = (idx: number, val: string) => {
     const newLetters = [...letters];
     newLetters[idx] = val.toUpperCase().slice(-1);
-    console.log(newLetters, inputRefs.current[idx + 1])
     setLetters(newLetters);
 
     onChange(serializeWithSpaces(newLetters));
@@ -144,8 +143,13 @@ export function WordleInput({
   };
 
   const getBgColor = (idx: number) => {
-    if (!feedback || letters.length !== totalLength) return "bg-background";
-    const feedbackItem = feedback.find((f) => f.index === idx);
+    const filledCount = letters.filter((l) => l !== "").length;
+
+    if (!feedback || filledCount !== totalLength) {
+      return "bg-background";
+    }
+
+    const feedbackItem = feedback.filter((item) => item.letter !== " ").find((_, index) => index === idx);
     if (!feedbackItem) return "bg-background";
 
     if (feedbackItem.letter === letters[idx]) {
@@ -192,7 +196,7 @@ export function WordleInput({
                     height: inputSize,
                     caretColor: "transparent",
                   }}
-                  className={`text-center text-2xl font-bold border ${getBgColor(
+                  className={`text-center text-2xl font-bold border max-h-13 max-w-13 ${getBgColor(
                     idx
                   )} border-gray-300 rounded`}
                 />
