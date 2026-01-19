@@ -76,6 +76,11 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
   })
 
   io.on("connection", (socket: Socket) => {
+    const connectionId =
+      socket.handshake.auth.connectionId ?? socket.id;
+
+    socket.data.connectionId = connectionId;
+
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()

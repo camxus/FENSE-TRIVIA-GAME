@@ -125,11 +125,18 @@ export function useGameSocket(): UseGameSocketReturn {
 
   // Initialize socket connection
   useEffect(() => {
-    const socketInstance = getSocket()
+    const storedPlayerId =
+      typeof window !== "undefined"
+        ? localStorage.getItem("playerId") ?? undefined
+        : undefined;
+
+    const socketInstance = getSocket(storedPlayerId)
     setSocket(socketInstance)
 
     socketInstance.on("connect", () => {
-      setPlayerId(socketInstance.id)
+      const id = socketInstance.data.connectionId ?? socketInstance.id;
+      setPlayerId(id);
+      localStorage.setItem("playerId",  id);
     });
 
     // Set up all socket event listeners
@@ -214,7 +221,6 @@ export function useGameSocket(): UseGameSocketReturn {
     })
 
     socketInstance.on("answer-feedback", ({ feedback }: { feedback: AnswerFeedback[] }) => {
-      console.log(feedback)
       setFeedback(feedback)
     })
 

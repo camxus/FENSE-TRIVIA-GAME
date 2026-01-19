@@ -4,13 +4,16 @@ import { io, type Socket } from "socket.io-client"
 
 let socket: Socket | null = null
 
-export function getSocket(): Socket {
+export function getSocket(connectionId?: string) {
   if (!socket) {
     socket = io(process.env.NEXT_PUBLIC_SOCKET_IO_HOST_URL || "http://localhost:3000", {
-      autoConnect: true,
-    })
+      auth: {
+        connectionId,
+      },
+    });
   }
-  return socket
+
+  return socket;
 }
 
 export function disconnectSocket() {
