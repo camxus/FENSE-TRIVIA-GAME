@@ -26,6 +26,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Reactions } from "@/components/reactions";
 import { useSearchParams } from "next/navigation";
 import { useGame } from "@/context/game-context";
+import { CategorySelect } from "@/components/category-select";
 
 export default function OnlinePage() {
   const searchParams = useSearchParams();
@@ -42,6 +43,8 @@ export default function OnlinePage() {
     isCreator,
     feedback,
     activeReactions,
+    availableCategories,
+    setGameState,
     setGuess,
     createRoom,
     joinRoom,
@@ -164,6 +167,15 @@ export default function OnlinePage() {
     }
 
     if (gameState === "waiting") {
+      const [step, setStep] = useState<"players" | "categories">("players")
+      const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
+
+      const toggleCategory = (id: string) => {
+        setSelectedCategoryIds((prev) =>
+          prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+        )
+      }
+
       return (
         <motion.div
           key={gameState}
@@ -182,18 +194,41 @@ export default function OnlinePage() {
             <CardContent className="space-y-6">
               <RoomCodeDisplay roomCode={currentRoomId} />
 
-              <PlayerList players={players} />
+              {step === "players" && <PlayerList players={players} />}
+
+              {step === "categories" && (
+                <CategorySelect
+                  availableCategories={availableCategories}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onSelect={toggleCategory}
+                />
+              )}
 
               {isCreator && (
-                <Button
-                  onClick={() => startGame()}
-                  disabled={players.length < 1}
-                  className="w-full"
-                  size="lg"
-                >
-                  Start Game
-                </Button>
+                <div className="flex gap-2">
+                  {step === "categories" && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => setStep("players")}
+                      className="flex-1"
+                    >
+                      Back
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() =>
+                      step === "players"
+                        ? setStep("categories")
+                        : startGame(selectedCategoryIds)
+                    }
+                    className="flex-1"
+                    disabled={step === "categories" && selectedCategoryIds.length === 0}
+                  >
+                    {step === "players" ? "Next" : "Start Game"}
+                  </Button>
+                </div>
               )}
+
 
               {!isCreator && (
                 <p className="text-center text-muted-foreground">
@@ -473,7 +508,7 @@ export default function OnlinePage() {
                 ))}
               </div>
 
-              <Button className="w-full" size="lg" onClick={() => startGame()}>
+              <Button className="w-full" size="lg" onClick={() => setGameState("waiting")}>
                 Play Again
               </Button>
             </CardContent>

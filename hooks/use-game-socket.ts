@@ -25,6 +25,11 @@ interface Question {
   timeLimit: number
   answerLenght: number[]
 }
+interface Category {
+  id: string
+  categoryName: string
+  questions: Question[]
+}
 
 type GameState = "lobby" | "waiting" | "playing" | "question-ended" | "new-category" | "game-ended" | "setup"
 
@@ -58,10 +63,13 @@ interface UseGameSocketReturn {
   activeReactions: Reaction[]
   chatMessages: ChatMessage[]
   activeMessages: ChatMessage[]
+  selectedCategories: Category[],
+  availableCategories: Category[],
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
-  startGame: (roomId?: string) => void
+  startGame: (selectedCategories: string[], roomId?: string) => void
   endQuestion: () => void
   nextQuestion: () => void
   queryAnswer: (guessValue: string) => void
@@ -91,6 +99,8 @@ export function useGameSocket(): UseGameSocketReturn {
   const [guess, setGuess] = useState("")
   const [correctAnswer, setCorrectAnswer] = useState("")
   const [currentRoomId, setCurrentRoomId] = useState("")
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
   const [isCreator, setIsCreator] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
@@ -134,17 +144,18 @@ export function useGameSocket(): UseGameSocketReturn {
     setSocket(socketInstance)
 
     socketInstance.on("connect", () => {
-      const id = socketInstance.data.connectionId ?? socketInstance.id;
+      const id = socketInstance.id;
       setPlayerId(id);
-      localStorage.setItem("playerId",  id);
+      localStorage.setItem("playerId", id || "");
     });
 
     // Set up all socket event listeners
-    socketInstance.on("room-created", ({ roomId, room }) => {
+    socketInstance.on("room-created", ({ roomId, room, availableCategories }) => {
       setCurrentRoomId(roomId)
       setPlayers(room.players)
       setGameState("waiting")
       setIsCreator(true)
+      setAvailableCategories(availableCategories)
     })
 
     socketInstance.on("room-joined", ({ room, question, category, timerEndTime }) => {
@@ -171,9 +182,10 @@ export function useGameSocket(): UseGameSocketReturn {
       setPlayers(room.players)
     })
 
-    socketInstance.on("game-started", ({ category }) => {
+    socketInstance.on("game-started", ({ category, selectedCategories }) => {
       playGameStartedAudio()
       setCurrentCategory(category)
+      setSelectedCategories(selectedCategories)
       setGameState("new-category")
       setGuess("")
       setCorrectAnswer("")
@@ -299,9 +311,9 @@ export function useGameSocket(): UseGameSocketReturn {
   )
 
   // Start game function
-  const startGame = useCallback((roomId = currentRoomId) => {
+  const startGame = useCallback((selectedCategoryIds: string[], roomId = currentRoomId) => {
     if (!socket || !currentRoomId) return
-    socket.emit("start-game", { roomId: roomId })
+    socket.emit("start-game", { roomId: roomId, selectedCategoryIds })
   }, [socket, currentRoomId])
 
 
@@ -377,6 +389,9 @@ export function useGameSocket(): UseGameSocketReturn {
     activeReactions,
     chatMessages,
     activeMessages,
+    selectedCategories,
+    availableCategories,
+    setGameState,
     setGuess,
     createRoom,
     joinRoom,
