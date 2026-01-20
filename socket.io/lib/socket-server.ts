@@ -16,7 +16,10 @@ export interface Player {
 export interface Room {
   id: string
   mode: "online" | "in-person"
+  playMode: "easy" | "hard"
+  language: "fr" | "en"
   players: Player[]
+  selectedCategoryIds: string[]
   currentCategoryIndex: number | null
   currentQuestionIndex: number | null
   isActive: boolean
@@ -33,9 +36,17 @@ export interface Question {
   timeLimit: number
 }
 
+export interface QuestionRecord {
+  id: string
+  question: Record<"fr" | "en", string>
+  answer: Record<"fr" | "en", string>
+  timeLimit: number
+}
+
 export interface Category {
+  id: string
   categoryName: string
-  questions: Question[]
+  questions: QuestionRecord[]
 }
 
 export interface ChatMessage {
@@ -58,8 +69,11 @@ const mockCategory: Category = {
     {
       id: "music-grammy-001",
       question:
-        "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
-      answer: "LES GRAMMY AWARDS",
+      {
+        "fr": "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
+        "en": "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
+      },
+      answer: { "fr": "LES GRAMMY AWARDS", "en": "LES GRAMMY AWARDS" },
       timeLimit: 20000000,
     },
   ],
@@ -89,19 +103,28 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const room: Room = {
         id: roomId,
         mode,
+        playMode: "easy",
+        language: "fr",
         players: [player],
         currentCategoryIndex: null,
         currentQuestionIndex: null,
         isActive: false,
         leaderId: mode === "in-person" ? socket.id : undefined,
         guesses: {},
-        questions: null
+        questions: null,
+        selectedCategoryIds: [],
       }
 
       rooms.set(roomId, room)
       socket.join(roomId)
 
-      socket.emit("room-created", { roomId, room })
+      const availableCategories = QUESTIONS.map(c => ({
+        id: c.id,
+        categoryName: c.categoryName,
+      }))
+
+
+      socket.emit("room-created", { roomId, room, availableCategories })
     })
 
     socket.on("join-room", ({ roomId, playerName }: { roomId: string; playerName: string }) => {
@@ -116,7 +139,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       room.players.push(player)
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
-      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
 
       socket.join(roomId)
       io.to(roomId).emit("player-joined", { player, room })
@@ -143,20 +166,28 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     })
 
     // Start game
-    socket.on("start-game", ({ roomId }: { roomId: string }) => {
+    socket.on("start-game", ({ roomId, selectedCategoryIds, playMode, language }: { roomId: string, selectedCategoryIds: string[], playMode: "easy" | "hard", language: "fr" | "en" }) => {
       const room = rooms.get(roomId)
-      if (!room) return
+      if (!room || !selectedCategoryIds.length) return
 
       room.isActive = true
       room.currentCategoryIndex = 0
       room.currentQuestionIndex = -1
       room.guesses = {}
-      room.questions = getRoomQuestions(QUESTIONS)
+      room.playMode = playMode
+      room.language = language
+      room.questions = getRoomQuestions(
+        QUESTIONS.filter((c) => selectedCategoryIds.includes(c.id)),
+      )
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
 
       io.to(roomId).emit("game-started", {
         category: category?.categoryName,
+        selectedCategories: room.questions?.map((c) => ({
+          id: c.id,
+          categoryName: c.categoryName,
+        })),
       })
     })
 
@@ -164,7 +195,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const room = rooms.get(roomId)
       if (!room) return
 
-      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
       if (!question) return
 
       const correctAnswer = question.answer.toUpperCase()
@@ -206,7 +237,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const nextCategoryIndex = room.currentCategoryIndex + 1;
       const nextQuestionIndex = room.currentQuestionIndex + 1;
 
-      const nextQuestion = getQuestion(room.questions, room.currentCategoryIndex, nextQuestionIndex);
+      const nextQuestion = getQuestion(room.questions, room.currentCategoryIndex, nextQuestionIndex, room.language);
 
       if (!!nextQuestion) {
         room.currentQuestionIndex = nextQuestionIndex;
@@ -234,7 +265,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       }
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
-      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
+      const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
 
       if (!question) return
 
@@ -323,7 +354,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         const room = rooms.get(roomId)
         if (!room || !room.isActive) return
 
-        const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex)
+        const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
         if (!question) return
 
         const correctAnswer = question.answer.toUpperCase()
@@ -343,7 +374,12 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         }
 
         // Store guess
-        if (isCorrect) room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+        if (isCorrect) {
+          room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+          if (room.playMode === "hard") {
+            endQuestion(roomId)
+          }
+        }
 
         socket.emit("answer-feedback", { feedback })
 
@@ -397,8 +433,22 @@ function getCategory(questions: Category[] | null, categoryIndex: number | null)
   return (questions && categoryIndex !== null) ? questions[categoryIndex] || null : null
 }
 
-function getQuestion(questions: Category[] | null, categoryIndex: number | null, questionIndex: number | null): Question | null {
-  return (questions && categoryIndex !== null && questionIndex !== null) ? questions[categoryIndex].questions[questionIndex] || null : null
+function getQuestion(
+  questions: Category[] | null,
+  categoryIndex: number | null,
+  questionIndex: number | null,
+  language: "fr" | "en"
+): Question | null {
+  if (!questions || categoryIndex === null || questionIndex === null) return null
+
+  const questionRecord = questions[categoryIndex]?.questions[questionIndex]
+  if (!questionRecord) return null
+
+  return {
+    ...questionRecord,
+    question: questionRecord.question[language],
+    answer: questionRecord.answer[language],
+  }
 }
 
 function generateRoomCode(): string {
@@ -430,19 +480,6 @@ export function getRoomQuestions(QUESTIONS: Category[]): Category[] {
   return shuffleArray(categoriesShuffled).slice(0, 5);
 }
 
-export interface Question {
-  id: string
-  question: string
-  answer: string
-  timeLimit: number
-}
-
-export interface Category {
-  id: string
-  categoryName: string
-  questions: Question[]
-}
-
 // Your Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -469,7 +506,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
 
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
-    const questions: Question[] = (data.questions || []).map((q: any, index: number) => ({
+    const questions: QuestionRecord[] = (data.questions || []).map((q: any, index: number) => ({
       id: q.id || `${categoryDoc.id}-${index}`,
       question: q.question,
       answer: q.answer,

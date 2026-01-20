@@ -69,7 +69,7 @@ interface UseGameSocketReturn {
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
-  startGame: (selectedCategories: string[], roomId?: string) => void
+  startGame: (selectedCategories: string[], playMode: "easy" | "hard", language: "fr" | "en", roomId?: string) => void
   endQuestion: () => void
   nextQuestion: () => void
   queryAnswer: (guessValue: string) => void
@@ -89,6 +89,8 @@ export function useGameSocket(): UseGameSocketReturn {
     playLoserAudio,
     playFinalWinnerAudio,
   } = useGameAudio();
+
+  const [language, setLangue] = useState<"en" | "fr">("en")
 
   const [gameState, setGameState] = useState<GameState>("lobby")
   const [playerId, setPlayerId] = useState<string>()
@@ -311,9 +313,9 @@ export function useGameSocket(): UseGameSocketReturn {
   )
 
   // Start game function
-  const startGame = useCallback((selectedCategoryIds: string[], roomId = currentRoomId) => {
+  const startGame = useCallback((selectedCategoryIds: string[], playMode: "easy" | "hard", language: "en" | "fr", roomId = currentRoomId) => {
     if (!socket || !currentRoomId) return
-    socket.emit("start-game", { roomId: roomId, selectedCategoryIds })
+    socket.emit("start-game", { roomId, selectedCategoryIds, playMode, language })
   }, [socket, currentRoomId])
 
 

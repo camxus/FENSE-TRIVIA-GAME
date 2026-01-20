@@ -167,7 +167,10 @@ export default function OnlinePage() {
     }
 
     if (gameState === "waiting") {
-      const [step, setStep] = useState<"players" | "categories">("players")
+      const [step, setStep] = useState<"players" | "categories" | "playMode" | "language">("players")
+      const [playMode, setPlayMode] = useState<"easy" | "hard">("easy")
+      const [language, setLanguage] = useState<"en" | "fr">("fr")
+
       const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
 
       const toggleCategory = (id: string) => {
@@ -178,59 +181,118 @@ export default function OnlinePage() {
 
       return (
         <motion.div
-          key={gameState}
+          key={step}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 mb-[3rem]">
+          className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 mb-[3rem]"
+        >
           <Card className="w-full max-w-2xl">
             <CardHeader>
-              <CardTitle className="text-3xl">Waiting Room</CardTitle>
+              <CardTitle className="text-3xl">
+                {step === "players"
+                  ? "Waiting Room"
+                  : step === "categories"
+                    ? "Select Categories"
+                    : "Select Play Mode"}
+              </CardTitle>
               <CardDescription>
-                Share the room code with your friends
+                {step === "players"
+                  ? "Share the room code with your friends"
+                  : step === "categories"
+                    ? "Select categories for this game"
+                    : "Choose a difficulty level"}
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
               <RoomCodeDisplay roomCode={currentRoomId} />
 
+              {/* Step 1: Players */}
               {step === "players" && <PlayerList players={players} />}
 
+              {/* Step 2: Categories */}
               {step === "categories" && (
-                <CategorySelect
-                  availableCategories={availableCategories}
-                  selectedCategoryIds={selectedCategoryIds}
-                  onSelect={toggleCategory}
-                />
+                <div className="space-y-4">
+                  <CategorySelect
+                    availableCategories={availableCategories}
+                    selectedCategoryIds={selectedCategoryIds}
+                    onSelect={toggleCategory}
+                  />
+                </div>
               )}
 
+              {/* Step 3: Play Mode */}
+              {step === "playMode" && (
+                <div className="flex flex-col gap-4">
+                  <Button
+                    variant={playMode === "easy" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPlayMode("easy")}
+                  >
+                    Easy
+                  </Button>
+                  <Button
+                    variant={playMode === "hard" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPlayMode("hard")}
+                  >
+                    Hard
+                  </Button>
+                </div>
+              )}
+
+              {/* Step 4: Play Mode */}
+              {step === "language" && (
+                <div className="flex flex-col gap-4">
+                  <Button
+                    variant={language === "en" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setLanguage("en")}
+                  >
+                    English
+                  </Button>
+                  <Button
+                    variant={language === "fr" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setLanguage("fr")}
+                  >
+                    French
+                  </Button>
+                </div>
+              )}
+
+              {/* Navigation buttons */}
               {isCreator && (
                 <div className="flex gap-2">
-                  {step === "categories" && (
+                  {(step === "categories" || step === "playMode") && (
                     <Button
                       variant="secondary"
-                      onClick={() => setStep("players")}
+                      onClick={() => setStep(step === "playMode" ? "categories" : "players")}
                       className="flex-1"
                     >
                       Back
                     </Button>
                   )}
                   <Button
-                    onClick={() =>
-                      step === "players"
-                        ? setStep("categories")
-                        : startGame(selectedCategoryIds)
-                    }
+                    onClick={() => {
+                      if (step === "players") setStep("categories")
+                      else if (step === "categories") setStep("playMode")
+                      else if (step === "playMode") setStep("language")
+                      else startGame(selectedCategoryIds, playMode, language)
+                    }}
                     className="flex-1"
-                    disabled={step === "categories" && selectedCategoryIds.length === 0}
+                    disabled={
+                      (step === "categories" && selectedCategoryIds.length === 0)
+                    }
                   >
-                    {step === "players" ? "Next" : "Start Game"}
+                    {step !== "language" ? "Next" : "Start Game"}
                   </Button>
                 </div>
               )}
 
-
-              {!isCreator && (
+              {!isCreator && step === "players" && (
                 <p className="text-center text-muted-foreground">
                   Waiting for the host to start the game...
                 </p>

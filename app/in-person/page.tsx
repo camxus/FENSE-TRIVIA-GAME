@@ -15,6 +15,7 @@ import { Scoreboard } from "@/components/scoreboard"
 import { Reactions } from "@/components/reactions"
 import { useGame } from "@/context/game-context"
 import { useRouter } from "next/navigation"
+import { CategorySelect } from "@/components/category-select"
 
 export default function InPersonPage() {
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function InPersonPage() {
     isCreator,
     feedback,
     activeReactions,
+    availableCategories,
     setGuess,
     createRoom,
     joinRoom,
@@ -98,73 +100,200 @@ export default function InPersonPage() {
   }
 
   if (gameState === "waiting") {
+    const [step, setStep] = useState(1)
+    const [newPlayerName, setNewPlayerName] = useState("")
+    const [language, setLanguage] = useState<"en" | "fr">("en")
+    const [playMode, setPlayMode] = useState<"easy" | "hard">("easy")
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
+
+    const toggleCategory = (id: string) => {
+      setSelectedCategoryIds((prev) =>
+        prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      )
+    }
+
     return (
       <motion.div
-        key={gameState}
+        key={step}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+        className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4"
+      >
         <div className="max-w-4xl mx-auto space-y-6 py-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Game Setup</h1>
             <div className="text-sm text-muted-foreground">Room: {currentRoomId}</div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {isCreator && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Add Players</CardTitle>
-                  <CardDescription>Add all players who will participate</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Player name"
-                      value={newPlayerName}
-                      onChange={(e) => setNewPlayerName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addPlayer(newPlayerName)}
-                    />
-                    <Button onClick={() => addPlayer(newPlayerName)} disabled={!newPlayerName.trim()} size="icon">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className={isCreator ? "" : "md:col-span-2"}>
+          {/* Step Content */}
+          {step === 1 && isCreator && (
+            <Card>
               <CardHeader>
-                <CardTitle>Players ({players.length})</CardTitle>
+                <CardTitle>Add Players</CardTitle>
+                <CardDescription>Add all players who will participate</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {players.map((player) => (
-                    <div key={player.id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-                      <span className="font-medium">{player.name}</span>
-                      {isCreator && player.id !== players[0]?.id && (
-                        <Button variant="ghost" size="icon" onClick={() => removePlayer(player.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Player name"
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addPlayer(newPlayerName)}
+                  />
+                  <Button
+                    onClick={() => addPlayer(newPlayerName)}
+                    disabled={!newPlayerName.trim()}
+                    size="icon"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Players ({players.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {players.map((player) => (
+                        <div
+                          key={player.id}
+                          className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                        >
+                          <span className="font-medium">{player.name}</span>
+                          {player.id !== players[0]?.id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removePlayer(player.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </CardContent>
+                </Card>
+
+                <Button
+                  className="mt-4"
+                  onClick={() => setStep(2)}
+                  disabled={players.length < 1}
+                >
+                  Next
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {step === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Game Settings</CardTitle>
+                <CardDescription>Select language, play mode, and categories</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-4">
+                  <Button
+                    variant={language === "en" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setLanguage("en")}
+                  >
+                    English
+                  </Button>
+                  <Button
+                    variant={language === "fr" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setLanguage("fr")}
+                  >
+                    French
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <Button
+                    variant={playMode === "easy" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPlayMode("easy")}
+                  >
+                    Easy
+                  </Button>
+                  <Button
+                    variant={playMode === "hard" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPlayMode("hard")}
+                  >
+                    Hard
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">Categories</span>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCategories.map((cat) => (
+                      <Button
+                        key={cat.id}
+                        variant={selectedCategoryIds.includes(cat.id) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleCategory(cat.id)}
+                      >
+                        {cat.categoryName}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-4">
+                  <Button onClick={() => setStep(1)}>Back</Button>
+                  <Button
+                    onClick={() => setStep(3)}
+                    disabled={selectedCategoryIds.length === 0}
+                  >
+                    Next
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
 
-          {isCreator && (
-            <Button onClick={() => startGame()} disabled={players.length < 1} className="w-full" size="lg">
-              <Play className="h-4 w-4 mr-2" />
-              Start Game
-            </Button>
+          {step === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Review & Start</CardTitle>
+                <CardDescription>Check all settings before starting</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h2 className="font-medium">Players</h2>
+                  <ul className="list-disc ml-5">
+                    {players.map((p) => (
+                      <li key={p.id}>{p.name}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <CategorySelect
+                  availableCategories={availableCategories}
+                  selectedCategoryIds={selectedCategoryIds}
+                  onSelect={toggleCategory}
+                />
+
+                <div className="flex justify-between mt-4">
+                  <Button onClick={() => setStep(2)}>Back</Button>
+                  <Button onClick={() => startGame(selectedCategoryIds, playMode, language)} className="w-full flex items-center justify-center gap-2">
+                    <Play className="h-4 w-4" /> Start Game
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {!isCreator && (
-            <p className="text-center text-muted-foreground">Waiting for the leader to start the game...</p>
+            <p className="text-center text-muted-foreground">
+              Waiting for the leader to start the game...
+            </p>
           )}
         </div>
       </motion.div>
