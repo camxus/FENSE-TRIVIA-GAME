@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Timer } from "@/components/timer"
+import { useAutoFontSize } from "./ui/use-auto-font-size"
 
 interface Question {
   id: string
@@ -27,6 +28,11 @@ export function QuestionDisplay({
   showAnswer = false,
   answer,
 }: QuestionDisplayProps) {
+  const { ref, exceeded } = useAutoFontSize<HTMLHeadingElement>(
+    [question.question],
+    { maxLines: 3 }
+  )
+
   return (
     <Card className={large ? "bg-primary text-primary-foreground" : ""}>
       <CardHeader>
@@ -34,7 +40,12 @@ export function QuestionDisplay({
           <CardDescription className={large ? "text-primary-foreground/70" : ""}>{question.category}</CardDescription>
           {timerEndTime && onTimerEnd && <Timer endTime={timerEndTime} onEnd={onTimerEnd} />}
         </div>
-        <CardTitle className={`text-balance ${large ? "text-5xl leading-tight" : "text-3xl"}`}>
+        <CardTitle
+          ref={ref}
+          className={`text-balance ${large && !exceeded
+              ? "text-5xl leading-tight"
+              : "text-2xl leading-snug"
+            }`}>
           {question.question}
         </CardTitle>
       </CardHeader>
