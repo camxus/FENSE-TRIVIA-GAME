@@ -34,7 +34,7 @@ export function QuestionDisplay({
   )
 
   return (
-    <Card className={large ? "bg-primary text-primary-foreground" : ""}>
+    <>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardDescription className={large ? "text-primary-foreground/70" : ""}>{question.category}</CardDescription>
@@ -44,19 +44,19 @@ export function QuestionDisplay({
           ref={ref}
           className={`text-balance ${large && !exceeded
               ? "text-5xl leading-tight"
-              : "text-2xl leading-snug"
+              : "text-md leading-snug"
             }`}>
           {question.question}
         </CardTitle>
       </CardHeader>
       {showAnswer && answer && (
         <CardContent>
-          <div className="p-6 bg-primary/10 rounded-lg text-center">
+          <div className="p-6 rounded-lg text-center">
             <p className="text-sm text-muted-foreground mb-2">Correct Answer:</p>
             <p className="text-4xl font-bold">{answer}</p>
           </div>
         </CardContent>
       )}
-    </Card>
+    </>
   )
 }

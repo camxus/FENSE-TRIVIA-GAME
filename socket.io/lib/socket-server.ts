@@ -10,6 +10,8 @@ dotenv.config();
 export interface Player {
   id: string
   name: string
+  clean_score: number
+  time_bonus: number
   score: number
 }
 
@@ -98,7 +100,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
-      const player: Player = { id: socket.id, name: playerName, score: 0 }
+      const player: Player = { id: socket.id, name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
 
       const room: Room = {
         id: roomId,
@@ -135,7 +137,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         return
       }
 
-      const player: Player = { id: socket.id, name: playerName, score: 0 }
+      const player: Player = { id: socket.id, name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
       room.players.push(player)
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
@@ -209,6 +211,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
                 0,
                 Math.floor((guess.endTime!) / 1000)
               )
+              player.clean_score += 100
+              player.time_bonus += timeBonus * 10
               player.score += 100 + timeBonus * 10
             }
           }
@@ -300,7 +304,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const room = rooms.get(roomId)
       if (!room || room.mode !== "in-person" || socket.id !== room.leaderId) return
 
-      const player: Player = { id: generatePlayerId(), name: playerName, score: 0 }
+      const player: Player = { id: generatePlayerId(), name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
       room.players.push(player)
 
       io.to(roomId).emit("player-added", { player, room })
@@ -502,7 +506,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   const categoriesSnapshot = await getDocs(collection(db, "questions"))
   const categories: Category[] = []
 
-  // return [mockCategory]
+  return [mockCategory]
 
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()

@@ -20,7 +20,7 @@ export function useGameAudio() {
   const playQuestionStartedAudio = (loop: boolean = true) => {
     if (!questionStartedAudioRef.current) {
       questionStartedAudioRef.current = new Audio("/question-started.wav");
-      questionStartedAudioRef.current.loop = false;
+      questionStartedAudioRef.current.loop = true;
     }
     const audio = questionStartedAudioRef.current;
     audio.currentTime = 0;

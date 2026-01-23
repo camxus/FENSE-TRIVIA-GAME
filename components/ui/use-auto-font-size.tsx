@@ -20,6 +20,8 @@ export function useAutoFontSize<T extends HTMLElement>(
       const lineHeight = parseFloat(style.lineHeight)
       const lines = Math.round(el.scrollHeight / lineHeight)
 
+
+      console.log(lines)
       setExceeded(lines > maxLines)
     }
 

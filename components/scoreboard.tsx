@@ -3,12 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-
-interface Player {
-  id: string
-  name: string
-  score: number
-}
+import { Player } from "@/hooks/use-game-socket"
 
 interface ScoreboardProps extends React.HTMLAttributes<HTMLDivElement> {
   players: Player[]
@@ -65,7 +60,10 @@ export function Scoreboard({ cardTitle = "Scoreboard", cardDescription, players,
                   <span className="font-bold text-muted-foreground">#{index + 1}</span>
                   <span className="font-medium">{player.name}</span>
                 </div>
-                <span className="font-bold text-lg">{player.score}</span>
+                <div className="">
+                  <span className="font-bold text-lg">{player.clean_score} </span>
+                  {!!player.time_bonus && <span className="font-bold text-lg text-red-400">+{player.time_bonus}</span>}
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>

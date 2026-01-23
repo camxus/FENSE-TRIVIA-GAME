@@ -12,9 +12,11 @@ interface AnswerFeedback {
   index: number
 }
 
-interface Player {
+export interface Player {
   id: string
   name: string
+  clean_score: number
+  time_bonus: number
   score: number
 }
 
