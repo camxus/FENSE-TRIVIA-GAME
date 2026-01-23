@@ -506,7 +506,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   const categoriesSnapshot = await getDocs(collection(db, "questions"))
   const categories: Category[] = []
 
-  return [mockCategory]
+  // return [mockCategory]
 
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
