@@ -25,7 +25,8 @@ interface Question {
   question: string
   category: string
   timeLimit: number
-  answerLenght: number[]
+  answerLenght: number
+  specialCharacters:   { char: string, index: number }[]
 }
 interface Category {
   id: string

@@ -12,7 +12,9 @@ export interface Player {
   name: string
   clean_score: number
   time_bonus: number
+  combo_bonus: number
   score: number
+  streak: number
 }
 
 export interface Room {
@@ -60,6 +62,20 @@ export interface ChatMessage {
   timestamp: number
 }
 
+// Time bonus thresholds (seconds taken)
+const TIME_BONUS_MAP = [
+  { maxTime: 3, bonus: 45 },
+  { maxTime: 10, bonus: 30 },
+  { maxTime: 20, bonus: 15 },
+  { maxTime: Infinity, bonus: 5 },
+]
+
+// Combo streak bonuses
+const COMBO_BONUS_MAP = new Map<number, number>([
+  [3, 50],
+  [5, 100],
+])
+
 let QUESTIONS: Category[] = []
 
 const rooms = new Map<string, Room>()
@@ -75,7 +91,7 @@ const mockCategory: Category = {
         "fr": "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
         "en": "Quel est le nom des récompenses musicales internationales décernées chaque année aux États-Unis pour honorer les meilleurs artistes, albums et chansons, tous styles confondus ?",
       },
-      answer: { "fr": "LES GRAMMY AWARDS", "en": "LES GRAMMY AWARDS" },
+      answer: { "fr": "LES GRAMMY'S AWARDS", "en": "LES GRAMMY'S AWARDS" },
       timeLimit: 20000000,
     },
   ],
@@ -100,7 +116,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     // Create or join room
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
-      const player: Player = { id: socket.id, name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
+      const player: Player = {
+        id: socket.id,
+        name: playerName,
+        clean_score: 0,
+        time_bonus: 0,
+        combo_bonus: 0,
+        score: 0,
+        streak: 0,
+      }
 
       const room: Room = {
         id: roomId,
@@ -137,7 +161,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         return
       }
 
-      const player: Player = { id: socket.id, name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
+      const player: Player = {
+        id: socket.id,
+        name: playerName,
+        clean_score: 0,
+        time_bonus: 0,
+        combo_bonus: 0,
+        score: 0,
+        streak: 0,
+      }
       room.players.push(player)
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
@@ -151,8 +183,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         question: {
           ...question,
           answer: undefined,
-          answerLenght: question?.answer.split(" ")
-            .map(word => word.length)
+          answerLenght: question?.answer.length,
+          specialCharacters: question && extractSpecialCharacters(question?.answer),
         },
         timerEndTime: room.timerEndTime,
       })
@@ -206,14 +238,34 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         Object.entries(room.guesses).forEach(([playerId, guess]) => {
           if (guess.value === correctAnswer) {
             const player = room.players.find((p) => p.id === playerId)
-            if (player) {
-              const timeBonus = Math.max(
-                0,
-                Math.floor((guess.endTime!) / 1000)
-              )
-              player.clean_score += 100
-              player.time_bonus += timeBonus * 10
-              player.score += 100 + timeBonus * 10
+            if (!player) return
+
+            // Calculate time taken (not time left)
+            const timeTaken =
+              question.timeLimit - guess.endTime / 1000
+
+            // 🎯 Time bonus using map
+            let timeBonus = 0
+            for (const tier of TIME_BONUS_MAP) {
+              if (timeTaken <= tier.maxTime) {
+                timeBonus = tier.bonus
+                break
+              }
+            }
+
+            // Base score
+            player.clean_score += 100
+            player.time_bonus += timeBonus
+            player.score += 100 + timeBonus
+
+            // 🔥 Combo logic using Map
+            player.streak += 1
+
+            const comboBonus = COMBO_BONUS_MAP.get(player.streak) || 0
+
+            if (comboBonus > 0) {
+              player.combo_bonus += comboBonus
+              player.score += comboBonus
             }
           }
         })
@@ -280,8 +332,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         question: {
           ...question,
           answer: undefined,
-          answerLenght: question.answer.split(" ")
-            .map(word => word.length)
+          answerLenght: question.answer.length,
+          specialCharacters: extractSpecialCharacters(question.answer),
         },
         timerEndTime: room.timerEndTime,
       })
@@ -304,7 +356,15 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const room = rooms.get(roomId)
       if (!room || room.mode !== "in-person" || socket.id !== room.leaderId) return
 
-      const player: Player = { id: generatePlayerId(), name: playerName, clean_score: 0, time_bonus: 0, score: 0 }
+      const player: Player = {
+        id: generatePlayerId(),
+        name: playerName,
+        clean_score: 0,
+        time_bonus: 0,
+        combo_bonus: 0,
+        score: 0,
+        streak: 0,
+      }
       room.players.push(player)
 
       io.to(roomId).emit("player-added", { player, room })
@@ -375,6 +435,17 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           } else if (correctAnswer.includes(guess[i])) {
             feedback.push({ letter: null, index: i })
           }
+        }
+
+        if (!isCorrect) {
+          const player = room.players.find((p) => p.id === socket.id)
+          if (player) {
+            player.score -= 5
+            if (player.score < 0) player.score = 0 // optional: prevent negative score
+          }
+
+          // update scores for everyone
+          io.to(roomId).emit("points-updated", { players: room.players })
         }
 
         // Store guess
@@ -480,8 +551,8 @@ export function getRoomQuestions(QUESTIONS: Category[]): Category[] {
     questions: shuffleArray(category.questions).slice(0, 5),
   }));
 
-  // Shuffle the order of categories and limit to 5 categories
-  return shuffleArray(categoriesShuffled).slice(0, 5);
+  // Shuffle the order of categories categories
+  return shuffleArray(categoriesShuffled)
 }
 
 // Your Firebase configuration from environment variables
@@ -506,7 +577,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   const categoriesSnapshot = await getDocs(collection(db, "questions"))
   const categories: Category[] = []
 
-  // return [mockCategory]
+  return [mockCategory]
 
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
@@ -525,4 +596,19 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
   }
 
   return categories
+}
+
+function extractSpecialCharacters(answer: string): { char: string; index: number }[] {
+  const specials: { char: string; index: number }[] = []
+
+  for (let i = 0; i < answer.length; i++) {
+    const char = answer[i]
+
+    // Allow A–Z and 0–9
+    if (!/[A-Z0-9]/.test(char)) {
+      specials.push({ char, index: i })
+    }
+  }
+
+  return specials
 }

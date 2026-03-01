@@ -21,7 +21,7 @@ import { QuestionDisplay } from "@/components/question-display";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { WordleInput } from "@/components/wordle-input";
+import { WordleInput } from "@/components/new-wordle-input";
 import { AnimatePresence, motion } from "framer-motion"
 import { Reactions } from "@/components/reactions";
 import { useSearchParams } from "next/navigation";
@@ -217,13 +217,19 @@ export default function OnlinePage() {
                       <div className="space-y-2">
                         <Label htmlFor="guess">Your Answer</Label>
 
-                        <div className="flex justify-center">
-                          <WordleInput
-                            length={currentQuestion.answerLenght}
-                            value={guess}
-                            onChange={setGuess}
-                            feedback={feedback}
-                          />
+                        <div className="flex flex-col items-center w-full space-y-2">
+                          <div className="flex justify-center">
+                            <WordleInput
+                              length={currentQuestion.answerLenght}
+                              specials={currentQuestion.specialCharacters}
+                              value={guess}
+                              onChange={setGuess}
+                              feedback={feedback}
+                            />
+                          </div>
+                          <Button onClick={() => queryAnswer(guess)}>
+                            Submit Answer
+                          </Button>
                         </div>
                       </div>
 
@@ -414,7 +420,7 @@ export default function OnlinePage() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-          <Card className="w-full max-w-2xl">
+          <Card className="w-full max-w-2xl py-8">
             <CardHeader>
               <CardTitle className="text-4xl text-center">Game Over!</CardTitle>
               <CardDescription className="text-center">
