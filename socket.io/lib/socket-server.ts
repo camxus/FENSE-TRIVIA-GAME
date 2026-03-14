@@ -135,7 +135,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         currentCategoryIndex: null,
         currentQuestionIndex: null,
         isActive: false,
-        leaderId: mode === "in-person" ? socket.id : undefined,
+        leaderId: socket.id,
         guesses: {},
         questions: null,
         selectedCategoryIds: [],
@@ -161,16 +161,22 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         return
       }
 
-      const player: Player = {
-        id: socket.id,
-        name: playerName,
-        clean_score: 0,
-        time_bonus: 0,
-        combo_bonus: 0,
-        score: 0,
-        streak: 0,
+      let player = room.players.find(p => p.id === connectionId);
+      if (!player) {
+        player = {
+          id: connectionId,
+          name: playerName,
+          clean_score: 0,
+          time_bonus: 0,
+          combo_bonus: 0,
+          score: 0,
+          streak: 0,
+        }
+        room.players.push(player)
+      } else {
+        // Reconnected: update socket.id for this session
+        player.id = connectionId;
       }
-      room.players.push(player)
 
       const category = getCategory(room.questions, room.currentCategoryIndex)
       const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
