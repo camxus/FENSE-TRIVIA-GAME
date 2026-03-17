@@ -199,10 +199,11 @@ export function WordleInput({
         maxLength={letterSlots}
         value={cleanValue}
         onChange={(val) => {
-
           onChange(serializeInput(val))
         }}
         disabled={disabled}
+        inputMode="text"
+        pattern="[A-Za-z0-9]*"
       >
         {segments.map((segment, idx) => {
           if (segment.separator) {
