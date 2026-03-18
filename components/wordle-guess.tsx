@@ -16,8 +16,8 @@ export function WordleGuess({ guess, answer, gap = 8 }: WordleGuessProps) {
   const [slotSize, setSlotSize] = React.useState(IDEAL_SLOT_SIZE)
   const [rows, setRows] = React.useState<string[][]>([])
 
-  const normalizedGuess = guess.toUpperCase()
-  const normalizedAnswer = answer.toUpperCase()
+  const normalizedGuess = guess.toString().toUpperCase()
+  const normalizedAnswer = answer.toString().toUpperCase()
 
   const answerWords = normalizedAnswer.split(" ")
 
