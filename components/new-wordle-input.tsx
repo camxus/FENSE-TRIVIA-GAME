@@ -68,7 +68,7 @@ export function WordleInput({
         (containerWidth - totalGapSpace) / totalSlots
       )
 
-      size = size > 32 ? size : 32 // minimum size
+      size = size > 20 ? size : 20 // minimum size
 
       setSlotSize(size)
     }

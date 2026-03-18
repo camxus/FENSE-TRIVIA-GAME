@@ -38,6 +38,7 @@ export interface Question {
   question: string
   answer: string
   timeLimit: number
+  isBoolean: boolean
 }
 
 export interface QuestionRecord {
@@ -45,6 +46,7 @@ export interface QuestionRecord {
   question: Record<"fr" | "en", string>
   answer: Record<"fr" | "en", string>
   timeLimit: number
+  isBoolean: boolean
 }
 
 export interface Category {
@@ -93,6 +95,7 @@ const mockCategory: Category = {
       },
       answer: { "fr": "LES GRAMMY'S AWARDS", "en": "LES GRAMMY'S AWARDS" },
       timeLimit: 20000000,
+      isBoolean: false,
     },
   ],
 }
@@ -417,7 +420,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       })
     })
 
-    // Query answer - Wordle-style feedback
+    // Query answer - Wordle-style feedback (skipped for boolean questions)
     socket.on(
       "query-answer",
       ({ roomId, guess }: { roomId: string; guess: string }) => {
@@ -427,42 +430,54 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
         if (!question) return
 
-        const correctAnswer = question.answer.toUpperCase()
-        guess = guess.toUpperCase()
+        const correctAnswer = question.isBoolean ? question.answer : question.answer.toUpperCase()
+        if (!question.isBoolean) guess = guess.toUpperCase()
 
-        const feedback: { letter: string | null; index: number }[] = []
+        const isCorrect = guess === correctAnswer
 
-        let isCorrect = guess === correctAnswer
-
-        // Wordle-style feedback
-        for (let i = 0; i < guess.length; i++) {
-          if (guess[i] === correctAnswer[i]) {
-            feedback.push({ letter: guess[i], index: i })
-          } else if (correctAnswer.includes(guess[i])) {
-            feedback.push({ letter: null, index: i })
-          }
-        }
-
-        if (!isCorrect) {
-          const player = room.players.find((p) => p.id === socket.id)
-          if (player) {
-            player.score -= 5
-            if (player.score < 0) player.score = 0 // optional: prevent negative score
+        if (question.isBoolean) {
+          // Boolean questions: no Wordle feedback, no score penalty — just right or wrong
+          if (isCorrect) {
+            room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+            if (room.playMode === "hard") {
+              endQuestion(roomId)
+            }
           }
 
-          // update scores for everyone
-          io.to(roomId).emit("points-updated", { players: room.players })
-        }
+          socket.emit("answer-feedback", { feedback: [], isCorrect })
+        } else {
+          // Wordle-style feedback for regular questions
+          const feedback: { letter: string | null; index: number }[] = []
 
-        // Store guess
-        if (isCorrect) {
-          room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
-          if (room.playMode === "hard") {
-            endQuestion(roomId)
+          for (let i = 0; i < guess.length; i++) {
+            if (guess[i] === correctAnswer[i]) {
+              feedback.push({ letter: guess[i], index: i })
+            } else if (correctAnswer.includes(guess[i])) {
+              feedback.push({ letter: null, index: i })
+            }
           }
-        }
 
-        socket.emit("answer-feedback", { feedback })
+          if (!isCorrect) {
+            const player = room.players.find((p) => p.id === socket.id)
+            if (player) {
+              player.score -= 5
+              if (player.score < 0) player.score = 0 // optional: prevent negative score
+            }
+
+            // update scores for everyone
+            io.to(roomId).emit("points-updated", { players: room.players })
+          }
+
+          // Store guess
+          if (isCorrect) {
+            room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+            if (room.playMode === "hard") {
+              endQuestion(roomId)
+            }
+          }
+
+          socket.emit("answer-feedback", { feedback, isCorrect })
+        }
 
         // have all players guessed correctly?
         const allCorrect = room.players.every(
@@ -592,6 +607,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
       question: q.question,
       answer: q.answer,
       timeLimit: q.timeLimit,
+      isBoolean: q.isBoolean ?? false,
     }))
 
     categories.push({

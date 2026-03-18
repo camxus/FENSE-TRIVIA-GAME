@@ -28,6 +28,7 @@ import { useSearchParams } from "next/navigation";
 import { useGame } from "@/context/game-context";
 import { CategorySelect } from "@/components/category-select";
 import Waiting from "@/components/game-state/waiting";
+import { BooleanAnswer } from "@/components/boolean-answer";
 
 export default function OnlinePage() {
   const searchParams = useSearchParams();
@@ -218,18 +219,29 @@ export default function OnlinePage() {
                         <Label htmlFor="guess">Your Answer</Label>
 
                         <div className="flex flex-col items-center w-full space-y-2">
-                          <div className="flex justify-center">
-                            <WordleInput
-                              length={currentQuestion.answerLenght}
-                              specials={currentQuestion.specialCharacters}
-                              value={guess}
-                              onChange={setGuess}
-                              feedback={feedback}
-                            />
+                          <div className="flex flex-col items-center w-full space-y-2">
+                            {currentQuestion.isBoolean ? (
+                              <BooleanAnswer
+                                onAnswer={(value) => queryAnswer(value)}
+                                feedback={feedback?.isCorrect}
+                              />
+                            ) : (
+                              <>
+                                <div className="flex justify-center">
+                                  <WordleInput
+                                    length={currentQuestion.answerLenght}
+                                    specials={currentQuestion.specialCharacters}
+                                    value={guess}
+                                    onChange={setGuess}
+                                    feedback={feedback?.feedback}
+                                  />
+                                </div>
+                                <Button onClick={() => queryAnswer(guess)}>
+                                  Submit Answer
+                                </Button>
+                              </>
+                            )}
                           </div>
-                          <Button onClick={() => queryAnswer(guess)}>
-                            Submit Answer
-                          </Button>
                         </div>
                       </div>
 

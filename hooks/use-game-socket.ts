@@ -26,7 +26,8 @@ interface Question {
   category: string
   timeLimit: number
   answerLenght: number
-  specialCharacters:   { char: string, index: number }[]
+  specialCharacters: { char: string, index: number }[]
+  isBoolean: boolean
 }
 interface Category {
   id: string
@@ -62,7 +63,7 @@ interface UseGameSocketReturn {
   correctAnswer: string
   currentRoomId: string
   isCreator: boolean
-  feedback: AnswerFeedback[] | null
+  feedback: {feedback: AnswerFeedback[], isCorrect: boolean} | null
   activeReactions: Reaction[]
   chatMessages: ChatMessage[]
   activeMessages: ChatMessage[]
@@ -108,7 +109,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
   const [isCreator, setIsCreator] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [feedback, setFeedback] = useState<AnswerFeedback[] | null>(null)
+  const [feedback, setFeedback] = useState<{feedback: AnswerFeedback[], isCorrect: boolean} | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
@@ -237,7 +238,7 @@ export function useGameSocket(): UseGameSocketReturn {
       alert(message)
     })
 
-    socketInstance.on("answer-feedback", ({ feedback }: { feedback: AnswerFeedback[] }) => {
+    socketInstance.on("answer-feedback", (feedback: { feedback: AnswerFeedback[], isCorrect: boolean }) => {
       setFeedback(feedback)
     })
 
