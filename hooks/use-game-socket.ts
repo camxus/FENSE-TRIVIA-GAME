@@ -172,6 +172,7 @@ export function useGameSocket(): UseGameSocketReturn {
         setTimerEndTime(timerEndTime)
         setCurrentCategory(category)
         setCurrentQuestion(question)
+        setFeedback({feedback: [], isCorrect: false})
         setGameState("playing")
       } else {
         setGameState("waiting")
@@ -217,6 +218,7 @@ export function useGameSocket(): UseGameSocketReturn {
     socketInstance.on("next-question", ({ category, question, timerEndTime }) => {
       setCurrentCategory(category)
       setCurrentQuestion(question)
+      setFeedback({feedback: [], isCorrect: false})
       setTimerEndTime(timerEndTime)
       setGameState("playing")
       setGuess("")
