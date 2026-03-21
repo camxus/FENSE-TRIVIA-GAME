@@ -255,7 +255,6 @@ export function useGameSocket(): UseGameSocketReturn {
 
 
     socketInstance.on("points-updated", ({ players }) => {
-      console.log(players)
       setPlayers(players)
     })
 

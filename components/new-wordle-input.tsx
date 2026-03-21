@@ -41,6 +41,7 @@ export function WordleInput({
 
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const [slotSize, setSlotSize] = React.useState(48)
+  const [needsWrap, setNeedsWrap] = React.useState(false)
 
   const sortedSpecials = React.useMemo(
     () => [...specials].sort((a, b) => a.index - b.index),
@@ -52,30 +53,29 @@ export function WordleInput({
   const cleanValue = value.replace(/[^A-Z0-9]/gi, '').slice(0, letterSlots).toUpperCase()
 
   /* -------------------------
-     🔥 Dynamic Resize Logic
+     Dynamic Resize Logic
   --------------------------*/
 
-  React.useLayoutEffect(() => {
-    const handleResize = () => {
+  React.useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new ResizeObserver(() => {
       if (!containerRef.current) return
 
       const containerWidth = containerRef.current.clientWidth
+      const totalGapSpace = gap * (length - 1)
+      const minTotalWidth = length * 30 + totalGapSpace
 
-      const totalSlots = length
-      const totalGapSpace = gap * (totalSlots - 1)
+      setNeedsWrap(minTotalWidth > containerWidth)
 
-      let size = Math.floor(
-        (containerWidth - totalGapSpace) / totalSlots
-      )
-
-      size = size > 20 ? size : 20 // minimum size
+      let size = Math.floor((containerWidth - totalGapSpace) / length)
+      size = size > 30 ? size : 30
 
       setSlotSize(size)
-    }
+    })
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
   }, [length, gap])
 
   /* -------------------------
@@ -120,8 +120,27 @@ export function WordleInput({
     return result
   }, [sortedSpecials, length])
 
+  /* -------------------------
+     Row Splitting Logic
+  --------------------------*/
+
+  const rows = React.useMemo(() => {
+    const result: typeof segments[] = []
+    let current: typeof segments = []
+
+    for (const segment of segments) {
+      if (segment.separator === ' ' && needsWrap) {
+        result.push(current)
+        current = []
+      } else {
+        current.push(segment)
+      }
+    }
+    result.push(current)
+    return result
+  }, [segments, needsWrap])
+
   const serializeInput = (val: string) => {
-    // Clean input: only A-Z0-9
     const upperVal = val.replace(/[^A-Z0-9]/gi, '').toUpperCase()
     let serialized = ''
     let letterIdx = 0
@@ -129,13 +148,11 @@ export function WordleInput({
     for (let i = 0; i < length; i++) {
       const special = sortedSpecials.find(s => s.index === i)
 
-      // Insert special at its index
       if (special) {
         serialized += special.char
-        continue // special takes this slot, don't add a letter here
+        continue
       }
 
-      // Insert next letter if available
       if (letterIdx < upperVal.length) {
         serialized += upperVal[letterIdx]
         letterIdx++
@@ -173,7 +190,7 @@ export function WordleInput({
   const getSlotColor = (letterIndex: number) => {
     if (!feedback) return ''
 
-    const item = feedback[letterIndex]
+    const item = feedback.find(f => f.index === letterIndex)
     if (!item) return ''
 
     if (item.letter === serializeInput(cleanValue)[letterIndex])
@@ -192,62 +209,68 @@ export function WordleInput({
   return (
     <div
       ref={containerRef}
-      className="flex flex-wrap justify-center items-center"
+      className="flex flex-col items-center w-full"
       style={{ gap }}
     >
-      <InputOTP
-        maxLength={letterSlots}
-        value={cleanValue}
-        onChange={(val) => {
-          onChange(serializeInput(val))
-        }}
-        disabled={disabled}
-        inputMode="text"
-        pattern="[A-Za-z0-9]*"
-      >
-        {segments.map((segment, idx) => {
-          if (segment.separator) {
-            return (
-              <div
-                key={`sep-${idx}`}
-                style={{
-                  height: slotSize,
-                  fontSize: slotSize * 0.5,
-                }}
-                className="flex items-center justify-center font-bold px-2"
-              >
-                {segment.separator}
-              </div>
-            )
-          }
-
-          const startLetterIndex = getLetterIndex(segment.start)
-
-          return (
-            <InputOTPGroup key={`grp-${idx}`} className="flex">
-              {Array.from({ length: segment.length }).map((_, i) => {
-                const globalIndex = segment.start + i
-                const letterIndex = startLetterIndex + i
+      {rows.map((rowSegments, rowIdx) => (
+        <div key={rowIdx} className="flex justify-center items-center" style={{ gap }}>
+          <InputOTP
+            maxLength={letterSlots}
+            value={cleanValue}
+            onChange={(val) => {
+              onChange(serializeInput(val))
+            }}
+            disabled={disabled}
+            inputMode="text"
+            pattern="[A-Za-z0-9]*"
+          >
+            {rowSegments.map((segment, idx) => {
+              if (segment.separator) {
+                if (segment.separator === ' ') {
+                  return <div key={`sep-${idx}`} style={{ width: slotSize * 0.5 }} />
+                }
 
                 return (
-                  <InputOTPSlot
-                    key={globalIndex}
-                    index={letterIndex}
+                  <div
+                    key={`sep-${idx}`}
                     style={{
-                      width: slotSize,
                       height: slotSize,
-                      fontSize: slotSize * 0.45,
+                      fontSize: slotSize * 0.5,
                     }}
-                    className={`font-bold ${getSlotColor(
-                      letterIndex
-                    )}`}
-                  />
+                    className="flex items-center justify-center font-bold px-2"
+                  >
+                    {segment.separator}
+                  </div>
                 )
-              })}
-            </InputOTPGroup>
-          )
-        })}
-      </InputOTP>
-    </div >
+              }
+
+              const startLetterIndex = getLetterIndex(segment.start)
+
+              return (
+                <InputOTPGroup key={`grp-${idx}`} className="flex">
+                  {Array.from({ length: segment.length }).map((_, i) => {
+                    const globalIndex = segment.start + i
+                    const letterIndex = startLetterIndex + i
+
+                    return (
+                      <InputOTPSlot
+                        key={globalIndex}
+                        index={letterIndex}
+                        style={{
+                          width: slotSize,
+                          height: slotSize,
+                          fontSize: slotSize * 0.45,
+                        }}
+                        className={`font-bold ${getSlotColor(letterIndex)}`}
+                      />
+                    )
+                  })}
+                </InputOTPGroup>
+              )
+            })}
+          </InputOTP>
+        </div>
+      ))}
+    </div>
   )
 }

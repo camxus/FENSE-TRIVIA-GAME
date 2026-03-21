@@ -228,13 +228,20 @@ export default function OnlinePage() {
                             ) : (
                               <>
                                 <div className="flex justify-center">
-                                  <WordleInput
-                                    length={currentQuestion.answerLenght}
-                                    specials={currentQuestion.specialCharacters}
-                                    value={guess}
-                                    onChange={setGuess}
-                                    feedback={feedback?.feedback}
-                                  />
+                                  <motion.div
+                                    key={currentQuestion.id}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                  >
+                                    <WordleInput
+                                      length={currentQuestion.answerLenght}
+                                      specials={currentQuestion.specialCharacters}
+                                      value={guess}
+                                      onChange={setGuess}
+                                      feedback={feedback?.feedback}
+                                    />
+                                  </motion.div>
                                 </div>
                                 <Button onClick={() => queryAnswer(guess)}>
                                   Submit Answer
