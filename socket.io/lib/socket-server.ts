@@ -354,7 +354,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
       const player = room.players.find((p) => p.id === playerId)
       if (player) {
-        player.score += points
+        player.clean_score += points
+        player.score = player.clean_score
         io.to(roomId).emit("points-updated", { players: room.players })
       }
     })

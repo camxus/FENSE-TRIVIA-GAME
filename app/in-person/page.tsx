@@ -17,6 +17,7 @@ import { useGame } from "@/context/game-context"
 import { useRouter } from "next/navigation"
 import { CategorySelect } from "@/components/category-select"
 import WaitingInPerson from "@/components/game-state/waiting-in-person"
+import { QuestionDisplay } from "@/components/question-display"
 
 export default function InPersonPage() {
   const router = useRouter()
@@ -138,11 +139,11 @@ export default function InPersonPage() {
 
           <Card className="bg-primary text-primary-foreground">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-primary-foreground/70">{currentQuestion?.category}</CardDescription>
-                {timerEndTime && <Timer endTime={timerEndTime} onEnd={() => { }} />}
-              </div>
-              <CardTitle className="text-5xl text-balance leading-tight">{currentQuestion?.question}</CardTitle>
+              <QuestionDisplay
+                question={currentQuestion!}
+                timerEndTime={timerEndTime}
+                onTimerEnd={() => {}}
+              />
             </CardHeader>
           </Card>
 
