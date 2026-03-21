@@ -348,10 +348,9 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       })
     })
 
-    // In-person mode: manual point assignment
     socket.on("assign-points", ({ roomId, playerId, points }: { roomId: string; playerId: string; points: number }) => {
       const room = rooms.get(roomId)
-      if (!room || room.mode !== "in-person" || socket.id !== room.leaderId) return
+      if (!room || socket.id !== room.leaderId) return
 
       const player = room.players.find((p) => p.id === playerId)
       if (player) {
