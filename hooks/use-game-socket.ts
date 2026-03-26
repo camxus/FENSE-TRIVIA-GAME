@@ -63,7 +63,7 @@ interface UseGameSocketReturn {
   correctAnswer: string
   currentRoomId: string
   isCreator: boolean
-  feedback: {feedback: AnswerFeedback[], isCorrect: boolean} | null
+  feedback: { feedback: AnswerFeedback[], isCorrect: boolean } | null
   activeReactions: Reaction[]
   chatMessages: ChatMessage[]
   activeMessages: ChatMessage[]
@@ -109,7 +109,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
   const [isCreator, setIsCreator] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [feedback, setFeedback] = useState<{feedback: AnswerFeedback[], isCorrect: boolean} | null>(null)
+  const [feedback, setFeedback] = useState<{ feedback: AnswerFeedback[], isCorrect: boolean } | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
@@ -150,7 +150,7 @@ export function useGameSocket(): UseGameSocketReturn {
     setSocket(socketInstance)
 
     socketInstance.on("connect", () => {
-      const id = socketInstance.id;
+      const id = storedPlayerId ?? socketInstance.id;
       setPlayerId(id);
       localStorage.setItem("playerId", id || "");
     });
@@ -172,7 +172,7 @@ export function useGameSocket(): UseGameSocketReturn {
         setTimerEndTime(timerEndTime)
         setCurrentCategory(category)
         setCurrentQuestion(question)
-        setFeedback({feedback: [], isCorrect: false})
+        setFeedback({ feedback: [], isCorrect: false })
         setGameState("playing")
       } else {
         setGameState("waiting")
@@ -218,7 +218,7 @@ export function useGameSocket(): UseGameSocketReturn {
     socketInstance.on("next-question", ({ category, question, timerEndTime }) => {
       setCurrentCategory(category)
       setCurrentQuestion(question)
-      setFeedback({feedback: [], isCorrect: false})
+      setFeedback({ feedback: [], isCorrect: false })
       setTimerEndTime(timerEndTime)
       setGameState("playing")
       setGuess("")
@@ -370,17 +370,14 @@ export function useGameSocket(): UseGameSocketReturn {
     socket?.emit("send-reaction", { emoji, roomId })
   }
 
-  const sendChatMessage = useCallback(
-    (message: string, roomId = currentRoomId) => {
-      if (!socket || !roomId || !message.trim()) return
+  const sendChatMessage = (message: string, roomId = currentRoomId) => {
+    if (!socket || !roomId || !message.trim()) return
 
-      socket.emit("send-chat-message", {
-        roomId,
-        message: message.trim(),
-      })
-    },
-    [socket, currentRoomId]
-  )
+    socket.emit("send-chat-message", {
+      roomId,
+      message: message.trim(),
+    })
+  }
 
   return {
     playerId,

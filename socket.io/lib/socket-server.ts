@@ -120,7 +120,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
       const player: Player = {
-        id: socket.id,
+        id: connectionId,
         name: playerName,
         clean_score: 0,
         time_bonus: 0,
@@ -138,7 +138,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         currentCategoryIndex: null,
         currentQuestionIndex: null,
         isActive: false,
-        leaderId: socket.id,
+        leaderId: connectionId,
         guesses: {},
         questions: null,
         selectedCategoryIds: [],
@@ -177,7 +177,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         }
         room.players.push(player)
       } else {
-        // Reconnected: update socket.id for this session
+        // Reconnected: update connectionId for this session
         player.id = connectionId;
       }
 
@@ -350,7 +350,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
     socket.on("assign-points", ({ roomId, playerId, points }: { roomId: string; playerId: string; points: number }) => {
       const room = rooms.get(roomId)
-      if (!room || socket.id !== room.leaderId) return
+      if (!room || connectionId !== room.leaderId) return
 
       const player = room.players.find((p) => p.id === playerId)
       if (player) {
@@ -363,7 +363,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     // In-person mode: add/remove players
     socket.on("add-player", ({ roomId, playerName }: { roomId: string; playerName: string }) => {
       const room = rooms.get(roomId)
-      if (!room || room.mode !== "in-person" || socket.id !== room.leaderId) return
+      if (!room || room.mode !== "in-person" || connectionId !== room.leaderId) return
 
       const player: Player = {
         id: generatePlayerId(),
@@ -381,7 +381,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
     socket.on("remove-player", ({ roomId, playerId }: { roomId: string; playerId: string }) => {
       const room = rooms.get(roomId)
-      if (!room || room.mode !== "in-person" || socket.id !== room.leaderId) return
+      if (!room || room.mode !== "in-person" || connectionId !== room.leaderId) return
 
       room.players = room.players.filter((p) => p.id !== playerId)
       io.to(roomId).emit("player-removed", { playerId, room })
@@ -398,7 +398,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     socket.on("disconnect", () => {
       // Remove player from rooms
       rooms.forEach((room, roomId) => {
-        const playerIndex = room.players.findIndex((p) => p.id === socket.id)
+        const playerIndex = room.players.findIndex((p) => p.id === connectionId)
         if (playerIndex !== -1) {
           io.to(roomId).emit("chat-message", {
             id: crypto.randomUUID(),
@@ -410,7 +410,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           } satisfies ChatMessage)
 
           room.players.splice(playerIndex, 1)
-          io.to(roomId).emit("player-left", { playerId: socket.id, room })
+          io.to(roomId).emit("player-left", { playerId: connectionId, room })
 
           // Delete room if empty
           if (room.players.length === 0) {
@@ -438,7 +438,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         if (question.isBoolean) {
           // Boolean questions: no Wordle feedback, no score penalty — just right or wrong
           if (isCorrect) {
-            room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+            room.guesses[connectionId] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
             if (room.playMode === "hard") {
               endQuestion(roomId)
             }
@@ -458,7 +458,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           }
 
           if (!isCorrect) {
-            const player = room.players.find((p) => p.id === socket.id)
+            const player = room.players.find((p) => p.id === connectionId)
             if (player) {
               player.score -= 5
               if (player.score < 0) player.score = 0 // optional: prevent negative score
@@ -470,7 +470,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
           // Store guess
           if (isCorrect) {
-            room.guesses[socket.id] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+            room.guesses[connectionId] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
             if (room.playMode === "hard") {
               endQuestion(roomId)
             }
@@ -495,22 +495,24 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       if (!room) return
 
       // Broadcast the reaction to everyone in the room
-      io.to(roomId).emit("reaction-received", { playerId: socket.id, emoji })
+      io.to(roomId).emit("reaction-received", { playerId: connectionId, emoji })
     })
 
     socket.on(
       "send-chat-message",
       ({ roomId, message }: { roomId: string; message: string }) => {
         const room = rooms.get(roomId)
+        console.log(roomId, message, room)
         if (!room) return
-
-        const player = room.players.find((p) => p.id === socket.id)
+        
+        const player = room.players.find((p) => p.id === connectionId)
+        console.log(player)
         if (!player) return
 
         const chatMessage: ChatMessage = {
           id: crypto.randomUUID(),
           roomId,
-          senderId: socket.id,
+          senderId: connectionId,
           senderName: player.name,
           message: message.trim(),
           timestamp: Date.now(),
@@ -566,10 +568,10 @@ export function getRoomQuestions(QUESTIONS: Category[]): Category[] {
     return arr;
   };
 
-  // Shuffle questions inside each category and limit to 5 questions
+  // Shuffle questions inside each category and limit to 15 questions
   const categoriesShuffled = QUESTIONS.map((category) => ({
     ...category,
-    questions: shuffleArray(category.questions).slice(0, 5),
+    questions: shuffleArray(category.questions).slice(0, 15),
   }));
 
   // Shuffle the order of categories categories
