@@ -17,6 +17,7 @@ export interface Player {
   name: string
   clean_score: number
   time_bonus: number
+  streak: number
   score: number
 }
 
@@ -53,6 +54,7 @@ export interface ChatMessage {
   timestamp: number
 }
 interface UseGameSocketReturn {
+  currentPlayer: Player | undefined
   playerId: string | undefined
   gameState: GameState
   players: Player[]
@@ -114,6 +116,8 @@ export function useGameSocket(): UseGameSocketReturn {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
 
+  const currentPlayer = players.find((p) => p.id === playerId);
+
   useEffect(() => {
     if (gameState === "playing") {
       playQuestionStartedAudio(true)
@@ -125,7 +129,6 @@ export function useGameSocket(): UseGameSocketReturn {
   useEffect(() => {
     if (gameState !== "game-ended") return;
 
-    const currentPlayer = players.find((p) => p.id === playerId);
     if (!currentPlayer) return;
 
     const scores = players.map((p) => p.score);
@@ -380,6 +383,7 @@ export function useGameSocket(): UseGameSocketReturn {
   }
 
   return {
+    currentPlayer,
     playerId,
     gameState,
     players,

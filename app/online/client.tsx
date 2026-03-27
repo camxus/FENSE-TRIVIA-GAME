@@ -36,6 +36,7 @@ export default function OnlinePage() {
   const {
     gameState,
     players,
+    currentPlayer,
     currentCategory,
     currentQuestion,
     timerEndTime,
@@ -298,6 +299,7 @@ export default function OnlinePage() {
               <div className="lg:col-span-2 space-y-6">
                 {currentQuestion && (
                   <QuestionDisplay
+                    currentPlayer={currentPlayer}
                     question={currentQuestion}
                     showAnswer={true}
                     answer={correctAnswer}
@@ -341,89 +343,63 @@ export default function OnlinePage() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-          <div className="max-w-6xl mx-auto space-y-6 py-8">
-            <div className="flex items-center justify-between">
-              <Image
-                src="/fense-logo.png"
-                alt="Fense Logo"
-                width={150}
-                height={150}
-              />
-              <div className="text-sm text-muted-foreground">
-                Room: {currentRoomId}
-              </div>
-            </div>
+          {/* Fullscreen Category Animation */}
+          <AnimatePresence>
+            {currentCategory && (
+              <motion.div
+                key={currentCategory}
+                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+              >
+                <motion.span
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  className="text-4xl"
+                >{currentCategory}</motion.span>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6 relative">
-                <Scoreboard players={players} />
-
-                {/* Fullscreen Category Animation */}
-                <AnimatePresence>
-                  {currentCategory && (
-                    <motion.div
-                      key={currentCategory}
-                      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 text-white text-5xl font-bold"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                {/* Start Button */}
+                {isCreator && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 0 }}
+                    animate={{
+                      opacity: 1,
+                      y: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5], // bounce up 10px and back
+                    }}
+                    whileHover={{ y: 5 }}
+                    transition={{
+                      opacity: { delay: 0.2, duration: 0.5 }, // fade in once
+                      y: {
+                        delay: 0.2,
+                        duration: 2.3,
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        ease: "easeInOut",
+                      }, // infinite bounce
+                    }}
+                  >
+                    <Button
+                      onClick={nextQuestion}
+                      size="lg"
+                      className="mt-10 px-10 py-4 text-foreground bg-background hover:bg-background/40"
                     >
-                      <motion.span
-                        initial={{ opacity: 0, x: 100 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -100 }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="text-4xl"
-                      >{currentCategory}</motion.span>
-
-                      {/* Start Button */}
-                      {isCreator && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 0 }}
-                          animate={{
-                            opacity: 1,
-                            y: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5], // bounce up 10px and back
-                          }}
-                          whileHover={{ y: 5 }}
-                          transition={{
-                            opacity: { delay: 0.2, duration: 0.5 }, // fade in once
-                            y: {
-                              delay: 0.2,
-                              duration: 2.3,
-                              repeat: Infinity,
-                              repeatType: "loop",
-                              ease: "easeInOut",
-                            }, // infinite bounce
-                          }}
-                        >
-                          <Button
-                            onClick={nextQuestion}
-                            size="lg"
-                            className="mt-10 px-10 py-4 text-foreground bg-background hover:bg-background/40"
-                          >
-                            Start
-                          </Button>
-                        </motion.div>
-                      )}
-                      {!isCreator && (
-                        <p className="mt-10 text-xl text-muted-foreground">
-                          Waiting for host to start...
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* <div>
-              <Scoreboard players={players} />
-            </div> */}
-            </div>
-          </div>
-
-          <Reactions />
-
+                      Start
+                    </Button>
+                  </motion.div>
+                )}
+                {!isCreator && (
+                  <p className="mt-10 text-xl text-muted-foreground">
+                    Waiting for host to start...
+                  </p>
+                )}
+                <Reactions />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       );
     }
