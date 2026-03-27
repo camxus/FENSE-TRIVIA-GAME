@@ -207,7 +207,7 @@ export default function OnlinePage() {
             </div>
 
             <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6 w-full overflow-hidden">
+              <div className="lg:col-span-2 space-y-6 w-full">
                 {currentQuestion && (
                   <Card className="pt-0">
                     <QuestionDisplay
