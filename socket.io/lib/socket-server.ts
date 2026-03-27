@@ -494,7 +494,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         if (!room) return
         
         const player = room.players.find((p) => p.id === connectionId)
-        console.log(player)
         if (!player) return
 
         const chatMessage: ChatMessage = {
