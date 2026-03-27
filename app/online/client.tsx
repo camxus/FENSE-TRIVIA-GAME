@@ -209,8 +209,9 @@ export default function OnlinePage() {
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6 w-full overflow-hidden">
                 {currentQuestion && (
-                  <Card>
+                  <Card className="pt-0">
                     <QuestionDisplay
+                      currentPlayer={currentPlayer}
                       question={currentQuestion}
                       timerEndTime={timerEndTime}
                       onTimerEnd={endQuestion}

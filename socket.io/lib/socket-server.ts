@@ -36,6 +36,7 @@ export interface Room {
 export interface Question {
   id: string
   question: string
+  category: string
   answer: string
   timeLimit: number
   isBoolean: boolean
@@ -532,6 +533,7 @@ function getQuestion(
   return {
     ...questionRecord,
     question: questionRecord.question[language],
+    category: questions[categoryIndex].categoryName,
     answer: questionRecord.answer[language],
   }
 }

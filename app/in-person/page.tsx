@@ -137,7 +137,7 @@ export default function InPersonPage() {
             <div className="text-sm text-muted-foreground">Room: {currentRoomId}</div>
           </div>
 
-          <Card className="bg-primary text-primary-foreground">
+          <Card className="bg-primary text-primary-foreground pt-0">
             <CardHeader>
               <QuestionDisplay
                 question={currentQuestion!}
