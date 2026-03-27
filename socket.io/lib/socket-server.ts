@@ -457,17 +457,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
             }
           }
 
-          if (!isCorrect) {
-            const player = room.players.find((p) => p.id === connectionId)
-            if (player) {
-              player.score -= 5
-              if (player.score < 0) player.score = 0 // optional: prevent negative score
-            }
-
-            // update scores for everyone
-            io.to(roomId).emit("points-updated", { players: room.players })
-          }
-
           // Store guess
           if (isCorrect) {
             room.guesses[connectionId] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
@@ -502,7 +491,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       "send-chat-message",
       ({ roomId, message }: { roomId: string; message: string }) => {
         const room = rooms.get(roomId)
-        console.log(roomId, message, room)
         if (!room) return
         
         const player = room.players.find((p) => p.id === connectionId)
