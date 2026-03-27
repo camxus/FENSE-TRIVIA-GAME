@@ -245,7 +245,7 @@ export default function OnlinePage() {
                                   </motion.div>
                                 </div>
                                 <Button onClick={() => queryAnswer(guess)}>
-                                  Submit Answer
+                                  Check Answer
                                 </Button>
                               </>
                             )}
