@@ -37,8 +37,6 @@ export function QuestionDisplay({
     { maxLines: 3 }
   )
 
-  if (currentPlayer) currentPlayer.streak = 5
-
   const streak = currentPlayer?.streak ?? 0
   const isRainbow = streak >= 5
   const isHot = streak >= 3
