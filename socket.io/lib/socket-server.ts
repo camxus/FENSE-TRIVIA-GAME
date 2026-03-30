@@ -297,8 +297,22 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     // Next question
     socket.on("next-question", ({ roomId }: { roomId: string }) => {
       const room = rooms.get(roomId)
-      if (!room) return
-      if (room.currentQuestionIndex === null || room.currentCategoryIndex === null) return
+      if (!room) {
+        socket.emit("error", { message: "Room not found", connectionId })
+        return
+      }
+      if (connectionId !== room.leaderId) {
+        socket.emit("error", { message: "Only the host can advance questions", connectionId })
+        return
+      }
+      if (!room.isActive) {
+        socket.emit("error", { message: "Game is not active", connectionId })
+        return
+      }
+      if (room.currentQuestionIndex === null || room.currentCategoryIndex === null) {
+        socket.emit("error", { message: "Game state invalid: indices are null", connectionId })
+        return
+      }
 
       const nextCategoryIndex = room.currentCategoryIndex + 1;
       const nextQuestionIndex = room.currentQuestionIndex + 1;
@@ -333,7 +347,10 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       const category = getCategory(room.questions, room.currentCategoryIndex)
       const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
 
-      if (!question) return
+      if (!question) {
+        socket.emit("error", { message: `No question found at category=${room.currentCategoryIndex} question=${room.currentQuestionIndex}` })
+        return
+      }
 
       room.timerEndTime = Date.now() + question.timeLimit * 1000
 
@@ -493,7 +510,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       ({ roomId, message }: { roomId: string; message: string }) => {
         const room = rooms.get(roomId)
         if (!room) return
-        
+
         const player = room.players.find((p) => p.id === connectionId)
         if (!player) return
 

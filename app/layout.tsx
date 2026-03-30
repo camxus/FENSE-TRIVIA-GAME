@@ -7,6 +7,7 @@ import LogoIntro from "@/components/logo-intro"
 import { AnimatePresence } from "framer-motion"
 import { GameProvider } from "@/context/game-context"
 import { ModalProvider } from "@/components/layout/modal-provider"
+import { ToastProvider } from "@/components/ui/toast"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -24,13 +25,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <GameProvider>
-          <ModalProvider>
-            <AnimatePresence mode="wait">
-              {children}
-            </AnimatePresence>
-          </ModalProvider>
-        </GameProvider>
+        <ToastProvider>
+          <GameProvider>
+            <ModalProvider>
+              <AnimatePresence mode="wait">
+                {children}
+              </AnimatePresence>
+            </ModalProvider>
+          </GameProvider>
+        </ToastProvider>
         <LogoIntro />
         <Analytics />
       </body>

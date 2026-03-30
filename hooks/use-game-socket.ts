@@ -6,6 +6,7 @@ import type { Socket } from "socket.io-client"
 import { useRef } from "react"
 import { useGameAudio } from "./use-game-audio"
 import { InternalBubble } from "@/components/reactions"
+import { useToast } from "./use-toast"
 
 interface AnswerFeedback {
   letter: string | null
@@ -88,6 +89,7 @@ interface UseGameSocketReturn {
 }
 
 export function useGameSocket(): UseGameSocketReturn {
+  const { toast } = useToast()
   const {
     questionStartedAudioRef,
     playGameStartedAudio,
@@ -95,8 +97,6 @@ export function useGameSocket(): UseGameSocketReturn {
     playLoserAudio,
     playFinalWinnerAudio,
   } = useGameAudio();
-
-  const [language, setLangue] = useState<"en" | "fr">("en")
 
   const [gameState, setGameState] = useState<GameState>("lobby")
   const [playerId, setPlayerId] = useState<string>()
@@ -277,6 +277,15 @@ export function useGameSocket(): UseGameSocketReturn {
       setTimeout(() => {
         setActiveMessages((prev) => prev.filter((m) => m.id !== message.id))
       }, 2000)
+    })
+
+    socketInstance.on("error", ({ message, connectionId }: { message: string, connectionId: string }) => {
+      if (connectionId !== playerId) return
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: message,
+      })
     })
 
     // Clean up all listeners on unmount
