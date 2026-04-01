@@ -53,8 +53,9 @@ export function Scoreboard({ cardTitle = "Scoreboard", cardDescription, players,
             {sortedPlayers.map((player, index) => (
               <motion.div
                 key={player.id}
-                className={cn("flex items-center justify-between p-3 bg-secondary rounded-lg", !!player.active && "opacity-50")}
+                className={cn("flex items-center justify-between p-3 bg-secondary rounded-lg", !player.active && "opacity-50")}
                 variants={itemVariants}
+                style={{ opacity: !player.active ? ".5 ! important" : "" }}
                 layout
               >
                 <div className="flex items-center gap-3">
