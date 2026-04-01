@@ -20,6 +20,7 @@ export interface Player {
   time_bonus: number
   streak: number
   score: number
+  is_admin: boolean
 }
 
 interface Question {
@@ -109,7 +110,6 @@ export function useGameSocket(): UseGameSocketReturn {
   const [currentRoomId, setCurrentRoomId] = useState("")
   const [availableCategories, setAvailableCategories] = useState<Category[]>([])
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
-  const [isCreator, setIsCreator] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [feedback, setFeedback] = useState<{ feedback: AnswerFeedback[], isCorrect: boolean } | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
@@ -117,6 +117,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
 
   const currentPlayer = players.find((p) => p.id === playerId);
+  const isCreator = currentPlayer?.is_admin;
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -163,7 +164,6 @@ export function useGameSocket(): UseGameSocketReturn {
       setCurrentRoomId(roomId)
       setPlayers(room.players)
       setGameState("waiting")
-      setIsCreator(true)
       setAvailableCategories(availableCategories)
     })
 
@@ -180,8 +180,6 @@ export function useGameSocket(): UseGameSocketReturn {
       } else {
         setGameState("waiting")
       }
-
-      setIsCreator(false)
     })
 
     socketInstance.on("player-joined", ({ room }) => {

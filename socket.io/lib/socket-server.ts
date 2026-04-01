@@ -15,6 +15,7 @@ export interface Player {
   combo_bonus: number
   score: number
   streak: number
+  is_admin: boolean
 }
 
 export interface Room {
@@ -128,6 +129,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         combo_bonus: 0,
         score: 0,
         streak: 0,
+        is_admin: true
       }
 
       const room: Room = {
@@ -175,6 +177,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           combo_bonus: 0,
           score: 0,
           streak: 0,
+          is_admin: false
         }
         room.players.push(player)
       } else {
@@ -398,6 +401,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         combo_bonus: 0,
         score: 0,
         streak: 0,
+        is_admin: false
       }
       room.players.push(player)
 
