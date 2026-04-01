@@ -279,6 +279,13 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
             }
           }
         })
+
+        room.players.forEach((player) => {
+          const guess = room.guesses[player.id]
+          if (!guess || guess.value !== correctAnswer) {
+            player.streak = 0
+          }
+        })
       }
 
       io.to(roomId).emit("question-ended", {
