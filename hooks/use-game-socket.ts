@@ -21,6 +21,7 @@ export interface Player {
   streak: number
   score: number
   is_admin: boolean
+  active: boolean
 }
 
 interface Question {
@@ -117,7 +118,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
 
   const currentPlayer = players.find((p) => p.id === playerId);
-  const isCreator = currentPlayer?.is_admin;
+  const isCreator = !!currentPlayer?.is_admin;
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -178,7 +179,12 @@ export function useGameSocket(): UseGameSocketReturn {
         setFeedback({ feedback: [], isCorrect: false })
         setGameState("playing")
       } else {
-        setGameState("waiting")
+        if (room.isActive && category) {
+          setCurrentCategory(category)
+          setGameState("new-category")
+        } else {
+          setGameState("waiting")
+        }
       }
     })
 

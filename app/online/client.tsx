@@ -397,10 +397,10 @@ export default function OnlinePage() {
                     Waiting for host to start...
                   </p>
                 )}
-                <Reactions />
               </motion.div>
             )}
           </AnimatePresence>
+          <Reactions />
         </motion.div>
       );
     }

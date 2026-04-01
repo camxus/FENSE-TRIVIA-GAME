@@ -16,6 +16,7 @@ export interface Player {
   score: number
   streak: number
   is_admin: boolean
+  active: boolean
 }
 
 export interface Room {
@@ -129,7 +130,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         combo_bonus: 0,
         score: 0,
         streak: 0,
-        is_admin: true
+        is_admin: true,
+        active: false
       }
 
       const room: Room = {
@@ -177,7 +179,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
           combo_bonus: 0,
           score: 0,
           streak: 0,
-          is_admin: false
+          is_admin: false,
+          active: true
         }
         room.players.push(player)
       } else {
@@ -193,12 +196,12 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       socket.emit("room-joined", {
         room: { ...room, questions: null },
         category: category?.categoryName,
-        question: {
+        question: question ? {
           ...question,
           answer: undefined,
-          answerLenght: question?.answer.length,
-          specialCharacters: question && extractSpecialCharacters(question?.answer),
-        },
+          answerLenght: question.answer.length,
+          specialCharacters: extractSpecialCharacters(question?.answer),
+        } : null,
         timerEndTime: room.timerEndTime,
       })
 
@@ -401,7 +404,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         combo_bonus: 0,
         score: 0,
         streak: 0,
-        is_admin: false
+        is_admin: false,
+        active: true
       }
       room.players.push(player)
 
@@ -438,7 +442,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
             timestamp: Date.now(),
           } satisfies ChatMessage)
 
-          room.players.splice(playerIndex, 1)
+          room.players[playerIndex].active = false
           io.to(roomId).emit("player-left", { playerId: connectionId, room })
 
           // Delete room if empty

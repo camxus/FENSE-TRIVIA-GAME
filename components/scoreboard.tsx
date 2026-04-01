@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Trophy } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Player } from "@/hooks/use-game-socket"
+import { cn } from "@/lib/utils"
 
 interface ScoreboardProps extends React.HTMLAttributes<HTMLDivElement> {
   players: Player[]
@@ -52,7 +53,7 @@ export function Scoreboard({ cardTitle = "Scoreboard", cardDescription, players,
             {sortedPlayers.map((player, index) => (
               <motion.div
                 key={player.id}
-                className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                className={cn("flex items-center justify-between p-3 bg-secondary rounded-lg", !!player.active && "opacity-50")}
                 variants={itemVariants}
                 layout
               >
