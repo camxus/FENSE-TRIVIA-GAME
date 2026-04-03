@@ -188,7 +188,7 @@ export function WordleInput({
   }, [feedback, cleanValue, letterSlots])
 
   const getSlotColor = (letterIndex: number) => {
-    if (!feedback) return ''
+    if (!feedback || serializeInput(cleanValue).length !== length) return ''
 
     const item = feedback.find(f => f.index === letterIndex)
     if (!item) return ''
@@ -199,7 +199,7 @@ export function WordleInput({
     if (item.letter === null)
       return 'bg-yellow-400 text-white border-yellow-400'
 
-    return 'bg-gray-200 text-white border-gray-200'
+    return ''
   }
 
   /* -------------------------
