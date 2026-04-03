@@ -48,6 +48,7 @@ export default function OnlinePage() {
     activeReactions,
     availableCategories,
     setGameState,
+    setFeedback,
     setGuess,
     createRoom,
     joinRoom,
@@ -240,7 +241,10 @@ export default function OnlinePage() {
                                       length={currentQuestion.answerLenght}
                                       specials={currentQuestion.specialCharacters}
                                       value={guess}
-                                      onChange={setGuess}
+                                      onChange={(value) => {
+                                        setFeedback(null)
+                                        setGuess(value)
+                                      }}
                                       feedback={feedback?.feedback}
                                     />
                                   </motion.div>
@@ -424,27 +428,11 @@ export default function OnlinePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3">
-                {sortedPlayers.map((player, index) => (
-                  <div
-                    key={player.id}
-                    className={`p-4 rounded-lg flex items-center justify-between ${index === 0
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary"
-                      }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl font-bold">#{index + 1}</span>
-                      <span className="text-lg">{player.name}</span>
-                    </div>
-                    <span className="text-2xl font-bold">{player.score}</span>
-                  </div>
-                ))}
-              </div>
-
               <Button className="w-full" size="lg" onClick={() => setGameState("waiting")}>
                 Play Again
               </Button>
+
+              <Scoreboard players={players} />
             </CardContent>
           </Card>
 
