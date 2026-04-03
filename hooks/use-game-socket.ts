@@ -75,6 +75,10 @@ interface UseGameSocketReturn {
   selectedCategories: Category[],
   availableCategories: Category[],
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  setFeedback: React.Dispatch<React.SetStateAction<{
+    feedback: AnswerFeedback[];
+    isCorrect: boolean;
+  } | null>>,
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
   joinRoom: (playerName: string, roomId: string) => void
@@ -414,6 +418,7 @@ export function useGameSocket(): UseGameSocketReturn {
     selectedCategories,
     availableCategories,
     setGameState,
+    setFeedback,
     setGuess,
     createRoom,
     joinRoom,
