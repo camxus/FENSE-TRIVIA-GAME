@@ -137,15 +137,11 @@ export default function InPersonPage() {
             <div className="text-sm text-muted-foreground">Room: {currentRoomId}</div>
           </div>
 
-          <Card className="bg-primary text-primary-foreground pt-0">
-            <CardHeader>
-              <QuestionDisplay
-                question={currentQuestion!}
-                timerEndTime={timerEndTime}
-                onTimerEnd={() => {}}
-              />
-            </CardHeader>
-          </Card>
+          <QuestionDisplay
+            question={currentQuestion!}
+            timerEndTime={timerEndTime}
+            onTimerEnd={endQuestion}
+          />
 
           <div className="grid md:grid-cols-2 gap-6">
             <Scoreboard players={players} />
@@ -379,29 +375,13 @@ export default function InPersonPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-3">
-              {sortedPlayers.map((player, index) => (
-                <div
-                  key={player.id}
-                  className={`p-4 rounded-lg flex items-center justify-between ${index === 0
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold">#{index + 1}</span>
-                    <span className="text-lg">{player.name}</span>
-                  </div>
-                  <span className="text-2xl font-bold">{player.score}</span>
-                </div>
-              ))}
-            </div>
-
             <Link href="" onClick={() => router.refresh()}>
               <Button className="w-full" size="lg">
                 Play Again
               </Button>
             </Link>
+
+            <Scoreboard players={players} />
           </CardContent>
         </Card>
 
