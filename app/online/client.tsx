@@ -227,6 +227,7 @@ export default function OnlinePage() {
                               <BooleanAnswer
                                 onAnswer={(value) => queryAnswer(value)}
                                 feedback={feedback?.isCorrect}
+                                setFeedback={setFeedback}
                               />
                             ) : (
                               <>

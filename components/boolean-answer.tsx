@@ -1,35 +1,67 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { AnswerFeedback } from "@/hooks/use-game-socket"
 
 interface BooleanAnswerProps {
   onAnswer: (value: string) => void
-  feedback?: boolean
+  feedback: boolean | null | undefined
+  setFeedback: React.Dispatch<
+    React.SetStateAction<{
+      feedback: AnswerFeedback[]
+      isCorrect: boolean | null
+    } | null>
+  >
 }
 
-export function BooleanAnswer({ onAnswer, feedback }: BooleanAnswerProps) {
+export function BooleanAnswer({
+  onAnswer,
+  feedback,
+  setFeedback,
+}: BooleanAnswerProps) {
   const [lastGuess, setLastGuess] = useState<string | null>(null)
+  const prevFeedback = useRef<typeof feedback>(feedback)
+
   const trueRef = useRef<HTMLButtonElement>(null)
   const falseRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    if (!feedback || feedback || !lastGuess) return
+    console.log(feedback)
+    if (!lastGuess || feedback === null || prevFeedback.current === feedback) return
+
+    prevFeedback.current = feedback
 
     const ref = lastGuess === "true" ? trueRef : falseRef
     const el = ref.current
     if (!el) return
 
-    // Remove class, force reflow, re-add — so animation retriggers every wrong guess
-    el.classList.remove("animate-pulse-once", "border-destructive", "text-destructive")
+    const isCorrect = feedback
+
+    const baseClasses = ["animate-pulse-once"]
+    const stateClasses = isCorrect
+      ? ["border-green-500", "text-green-500"]
+      : ["border-destructive", "text-destructive"]
+
+    // remove both possible states first
+    el.classList.remove(
+      "animate-pulse-once",
+      "border-green-500",
+      "text-green-500",
+      "border-destructive",
+      "text-destructive"
+    )
+
     void el.offsetWidth // force reflow
-    el.classList.add("animate-pulse-once", "border-destructive", "text-destructive")
+
+    el.classList.add(...baseClasses, ...stateClasses)
 
     const t = setTimeout(() => {
-      el.classList.remove("animate-pulse-once", "border-destructive", "text-destructive")
+      el.classList.remove(...baseClasses, ...stateClasses)
     }, 600)
 
+    setFeedback({ feedback: [], isCorrect: null })
+
     return () => clearTimeout(t)
-  }, [feedback])
+  }, [feedback, lastGuess])
 
   const handleAnswer = (value: string) => {
     setLastGuess(value)
@@ -42,6 +74,7 @@ export function BooleanAnswer({ onAnswer, feedback }: BooleanAnswerProps) {
         <Button
           key={value}
           ref={value === "true" ? trueRef : falseRef}
+          disabled={!!lastGuess}
           size="lg"
           variant="outline"
           className="w-28 capitalize transition-all"

@@ -8,7 +8,7 @@ import { useGameAudio } from "./use-game-audio"
 import { InternalBubble } from "@/components/reactions"
 import { useToast } from "./use-toast"
 
-interface AnswerFeedback {
+export interface AnswerFeedback {
   letter: string | null
   index: number
 }
@@ -68,7 +68,7 @@ interface UseGameSocketReturn {
   correctAnswer: string
   currentRoomId: string
   isCreator: boolean
-  feedback: { feedback: AnswerFeedback[], isCorrect: boolean } | null
+  feedback: { feedback: AnswerFeedback[], isCorrect: boolean | null } | null
   activeReactions: Reaction[]
   chatMessages: ChatMessage[]
   activeMessages: ChatMessage[]
@@ -77,7 +77,7 @@ interface UseGameSocketReturn {
   setGameState: React.Dispatch<React.SetStateAction<GameState>>,
   setFeedback: React.Dispatch<React.SetStateAction<{
     feedback: AnswerFeedback[];
-    isCorrect: boolean;
+    isCorrect: boolean | null;
   } | null>>,
   setGuess: (guess: string) => void
   createRoom: (playerName: string, mode: GameModes) => void
@@ -116,7 +116,7 @@ export function useGameSocket(): UseGameSocketReturn {
   const [availableCategories, setAvailableCategories] = useState<Category[]>([])
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [feedback, setFeedback] = useState<{ feedback: AnswerFeedback[], isCorrect: boolean } | null>(null)
+  const [feedback, setFeedback] = useState<{ feedback: AnswerFeedback[], isCorrect: boolean | null } | null>(null)
   const [activeReactions, setActiveReactions] = useState<Reaction[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [activeMessages, setActiveMessages] = useState<ChatMessage[]>([])
@@ -180,7 +180,7 @@ export function useGameSocket(): UseGameSocketReturn {
         setTimerEndTime(timerEndTime)
         setCurrentCategory(category)
         setCurrentQuestion(question)
-        setFeedback({ feedback: [], isCorrect: false })
+        setFeedback({ feedback: [], isCorrect: null })
         setGameState("playing")
       } else {
         if (room.isActive && category) {
@@ -229,7 +229,7 @@ export function useGameSocket(): UseGameSocketReturn {
     socketInstance.on("next-question", ({ category, question, timerEndTime }) => {
       setCurrentCategory(category)
       setCurrentQuestion(question)
-      setFeedback({ feedback: [], isCorrect: false })
+      setFeedback({ feedback: [], isCorrect: null })
       setTimerEndTime(timerEndTime)
       setGameState("playing")
       setGuess("")
