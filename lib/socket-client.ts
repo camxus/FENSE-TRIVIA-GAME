@@ -6,14 +6,26 @@ let socket: Socket | null = null
 
 export function getSocket(connectionId?: string) {
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_SOCKET_IO_HOST_URL || "http://localhost:3000", {
-      auth: {
-        connectionId,
-      },
-    });
+    socket = io(
+      process.env.NEXT_PUBLIC_SOCKET_IO_HOST_URL || "http://localhost:3000",
+      {
+        transports: ["websocket"],
+
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+
+        timeout: 20000,
+
+        auth: {
+          connectionId,
+        },
+      }
+    )
   }
 
-  return socket;
+  return socket
 }
 
 export function disconnectSocket() {
