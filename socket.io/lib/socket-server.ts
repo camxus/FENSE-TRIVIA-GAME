@@ -623,6 +623,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
 
   // return [mockCategory]
 
+  
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
     const questions: QuestionRecord[] = (data.questions || []).map((q: any, index: number) => ({
