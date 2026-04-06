@@ -242,13 +242,14 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     })
 
     function endQuestion(roomId: string) {
+      console.log("ended")
       const room = rooms.get(roomId)
       if (!room) return
 
       const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
       if (!question) return
 
-      const correctAnswer = question.answer.toUpperCase()
+      const correctAnswer = question.answer.toString().toUpperCase()
 
       if (room.mode === "online") {
         Object.entries(room.guesses).forEach(([playerId, guess]) => {
