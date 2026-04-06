@@ -158,6 +158,14 @@ export function useGameSocket(): UseGameSocketReturn {
     const socketInstance = getSocket(storedPlayerId)
     setSocket(socketInstance)
 
+    setInterval(() => {
+      if (socketInstance.connected) {
+        socketInstance.emit("ping-check");
+      } else {
+        socketInstance.connect();
+      }
+    }, 10000);
+
     socketInstance.on("connect", () => {
       const id = storedPlayerId ?? socketInstance.id;
       setPlayerId(id);
@@ -297,8 +305,30 @@ export function useGameSocket(): UseGameSocketReturn {
       })
     })
 
+    socketInstance.on("disconnect", (reason) => {
+      console.log("Disconnected:", reason);
+    });
+
+    socketInstance.on("reconnect", () => {
+      console.log("Reconnected");
+    
+      // 🔑 CRITICAL: rejoin room + resync state
+      if (currentRoomId && playerId) {
+        socket.emit("join-room", { roomId: currentRommId, playerName: currentPlayer.name })
+      }
+    });
+
+    const handleOnline = () => {
+      console.log("Network back → reconnecting socket");
+      socketInstance.connect();
+    };
+    
+    window.addEventListener("online", handleOnline);
+    
     // Clean up all listeners on unmount
     return () => {
+      window.removeEventListener("online", handleOnline);
+ 
       socketInstance.off("connect")
       socketInstance.off("room-created")
       socketInstance.off("room-joined")
@@ -316,8 +346,10 @@ export function useGameSocket(): UseGameSocketReturn {
       socketInstance.off("player-added")
       socketInstance.off("player-removed")
       socketInstance.off("points-updated")
-      socketInstance.off("reaction-recieved")
+      socketInstance.off("reaction-received")
       socketInstance.off("chat-message")
+
+      socketInstance.disconnect()
     }
   }, [])
 
