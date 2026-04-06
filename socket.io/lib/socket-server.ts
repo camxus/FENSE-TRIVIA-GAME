@@ -466,7 +466,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         const correctAnswer = question.isBoolean ? question.answer : question.answer.toUpperCase()
         if (!question.isBoolean) guess = guess.toUpperCase()
 
-        const isCorrect = guess === correctAnswer
+        const value = guess === "true"
+        const isCorrect = value === correctAnswer as unknown as boolean
 
         if (question.isBoolean) {
           // Boolean questions: no Wordle feedback, no score penalty — just right or wrong
@@ -623,7 +624,7 @@ export async function fetchQuestionsFromFirestore(): Promise<Category[]> {
 
   // return [mockCategory]
 
-  
+
   for (const categoryDoc of categoriesSnapshot.docs) {
     const data = categoryDoc.data()
     const questions: QuestionRecord[] = (data.questions || []).map((q: any, index: number) => ({

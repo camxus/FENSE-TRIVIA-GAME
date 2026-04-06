@@ -252,6 +252,7 @@ export function useGameSocket(): UseGameSocketReturn {
     })
 
     socketInstance.on("answer-feedback", (feedback: { feedback: AnswerFeedback[], isCorrect: boolean }) => {
+      console.log(feedback)
       setFeedback(feedback)
     })
 
