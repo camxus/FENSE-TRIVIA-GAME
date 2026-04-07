@@ -313,8 +313,8 @@ export function useGameSocket(): UseGameSocketReturn {
       console.log("Reconnected");
     
       // 🔑 CRITICAL: rejoin room + resync state
-      if (currentRoomId && playerId) {
-        socket.emit("join-room", { roomId: currentRommId, playerName: currentPlayer.name })
+      if (socket && currentRoomId && currentPlayer) {
+        joinRoom(currentPlayer.name, currentRoomId)
       }
     });
 

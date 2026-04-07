@@ -253,16 +253,18 @@ export function WordleInput({
                     const letterIndex = startLetterIndex + i
 
                     return (
-                      <InputOTPSlot
-                        key={globalIndex}
-                        index={letterIndex}
-                        style={{
-                          width: slotSize,
-                          height: slotSize,
-                          fontSize: slotSize * 0.45,
-                        }}
-                        className={`font-bold ${getSlotColor(letterIndex)}`}
-                      />
+                      <>
+                        <InputOTPSlot
+                          key={globalIndex}
+                          index={letterIndex}
+                          style={{
+                            width: slotSize,
+                            height: slotSize,
+                            fontSize: slotSize * 0.45,
+                          }}
+                          className={`font-bold ${getSlotColor(globalIndex)}`}
+                        />
+                      </>
                     )
                   })}
                 </InputOTPGroup>

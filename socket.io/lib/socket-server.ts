@@ -120,7 +120,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     socket.data.connectionId = connectionId;
 
     // Create or join room
-    socket.on("create-room", ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
+    socket.on("create-room", async ({ mode, playerName }: { mode: "online" | "in-person"; playerName: string }) => {
       const roomId = generateRoomCode()
       const player: Player = {
         id: connectionId,
@@ -152,7 +152,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
       rooms.set(roomId, room)
       socket.join(roomId)
 
-      const availableCategories = QUESTIONS.map(c => ({
+      const availableCategories = (await fetchQuestionsFromFirestore()).map(c => ({
         id: c.id,
         categoryName: c.categoryName,
       }))
@@ -242,7 +242,6 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
     })
 
     function endQuestion(roomId: string) {
-      console.log("ended")
       const room = rooms.get(roomId)
       if (!room) return
 
@@ -253,7 +252,8 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
       if (room.mode === "online") {
         Object.entries(room.guesses).forEach(([playerId, guess]) => {
-          if (guess.value === correctAnswer) {
+          const isCorrect = guess.value.toString().toUpperCase() === correctAnswer
+          if (isCorrect) {
             const player = room.players.find((p) => p.id === playerId)
             if (!player) return
 
@@ -289,7 +289,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
         room.players.forEach((player) => {
           const guess = room.guesses[player.id]
-          if (!guess || guess.value !== correctAnswer) {
+          if (!guess || !(guess.value.toString().toUpperCase() === correctAnswer)) {
             player.streak = 0
           }
         })
@@ -464,19 +464,16 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         const question = getQuestion(room.questions, room.currentCategoryIndex, room.currentQuestionIndex, room.language)
         if (!question) return
 
-        const correctAnswer = question.isBoolean ? question.answer : question.answer.toUpperCase()
-        if (!question.isBoolean) guess = guess.toUpperCase()
+        const correctAnswer = question.answer.toString().toUpperCase()
+        if (!question.isBoolean) guess = guess.toString().toUpperCase()
 
-        const value = guess === "true"
-        const isCorrect = value === correctAnswer as unknown as boolean
+        const isCorrect = guess === correctAnswer
 
         if (question.isBoolean) {
           // Boolean questions: no Wordle feedback, no score penalty — just right or wrong
-          if (isCorrect) {
-            room.guesses[connectionId] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
-            if (room.playMode === "hard") {
-              endQuestion(roomId)
-            }
+          room.guesses[connectionId] = { value: guess, endTime: +room.timerEndTime! - Date.now() }
+          if (room.playMode === "hard") {
+            endQuestion(roomId)
           }
 
           socket.emit("answer-feedback", { feedback: [], isCorrect })
@@ -505,7 +502,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
 
         // have all players guessed correctly?
         const allCorrect = room.players.every(
-          (player) => room.guesses[player.id]?.value === correctAnswer
+          (player) => question.isBoolean ? !!room.guesses[player.id]?.value.toString() : room.guesses[player.id]?.value === correctAnswer
         )
 
         if (allCorrect) {
