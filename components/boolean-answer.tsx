@@ -25,7 +25,6 @@ export function BooleanAnswer({
   const falseRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    console.log(feedback)
     if (!lastGuess || feedback === null || prevFeedback.current === feedback) return
 
     prevFeedback.current = feedback

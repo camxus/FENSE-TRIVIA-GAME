@@ -465,7 +465,7 @@ export async function initializeSocketServer(httpServer: HTTPServer) {
         if (!question) return
 
         const correctAnswer = question.answer.toString().toUpperCase()
-        if (!question.isBoolean) guess = guess.toString().toUpperCase()
+        guess = guess.toString().toUpperCase()
 
         const isCorrect = guess === correctAnswer
 
