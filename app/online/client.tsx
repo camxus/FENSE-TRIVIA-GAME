@@ -250,8 +250,8 @@ export default function OnlinePage() {
                                     />
                                   </motion.div>
                                 </div>
-                                <Button onClick={() => queryAnswer(guess)}>
-                                  Check Answer
+                                <Button disabled={!!feedback?.isCorrect} onClick={() => queryAnswer(guess)}>
+                                  {!!feedback?.isCorrect ? "Correct" : "Check Answer"}
                                 </Button>
                               </>
                             )}
